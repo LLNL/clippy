@@ -22,6 +22,10 @@ Clippy allows these users to interact with HPC resources in an easy, straightfor
 environment – at the REPL, for example, or within a notebook – without the need to learn
 complex HPC behavior and arcane job submission commands.
 
+## Installation of Python Code
+```console
+$ python setup.py install
+```
 
 ## Building C++ Examples on LC
 
