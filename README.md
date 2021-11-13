@@ -46,7 +46,10 @@ $ cd ../.. #back to root project directory
 ```python
 $ ipython3-3.8.2
 
-In [1]: from clippy import Clippy
+In [1]: from clippy import clippy_import
+        from clippy import config
+        config.cmd_prefix = ''
+        config.loglevel = 0
 
  ╭────────────────────────────────────╮
  │ It looks like you want to use HPC. │ 
@@ -60,21 +63,24 @@ In [1]: from clippy import Clippy
     │╰─╯│
     ╰───╯
 
-In [2]: c = Clippy({'examples': 'clippy-cpp/build/examples'}, cmd_prefix='', loglevel=0)
+In [2]: clippy_import('clippy-cpp/build/examples') # imports examples into the local environment - no namespace
+        howdy('Seth')
+Out[2]: 'Howdy, Seth!'
 
-In [3]: c.examples.howdy('Seth')  # can also use a named arg: c.examples.howdy(name='Seth')
+In [3]: clippy_import('clippy-cpp/build/examples', namespace='examples') # imports examples into the examples namespace
+        examples.howdy('Seth')  # can also use a named arg: examples.howdy(name='Seth')
 Out[3]: 'Howdy, Seth!'
 
-In [4]: c.examples.sum(1, 2)
+In [4]: examples.sum(1, 2)
 Out[4]: 3.0
 
-In [5]: c.examples.sort_edges([(5,5),(3,5),(2,2),(0,0)])
+In [5]: examples.sort_edges([(5,5),(3,5),(2,2),(0,0)])
 Out[5]: [[0, 0], [2, 2], [3, 5], [5, 5]]
 
-In [6]: c.examples.sort_edges([(5,5),(3,5),(2,2),(0,0)], reverse=True)
+In [6]: examples.sort_edges([(5,5),(3,5),(2,2),(0,0)], reverse=True)
 Out[6]: [[5, 5], [3, 5], [2, 2], [0, 0]]
 
-In [7]: c.examples.sort_strings(['zulu','yankee','whiskey','uniform','romeo','mike','kilo','foxtrot','delta','alfa'])
+In [7]: examples.sort_strings(['zulu','yankee','whiskey','uniform','romeo','mike','kilo','foxtrot','delta','alfa'])
 Out[7]: 
 ['alfa',
  'delta',
@@ -87,7 +93,7 @@ Out[7]:
  'yankee',
  'zulu']
 
-In [8]: c.examples.sort_strings(['zulu','yankee','whiskey','uniform','romeo','mike','kilo','foxtrot','delta','alfa'], reverse=True)
+In [8]: examples.sort_strings(['zulu','yankee','whiskey','uniform','romeo','mike','kilo','foxtrot','delta','alfa'], reverse=True)
 Out[8]: 
 ['zulu',
  'yankee',
@@ -100,7 +106,7 @@ Out[8]:
  'delta',
  'alfa']
 
-In [9]: c.examples.grumpy()
+In [9]: examples.grumpy()
 ---------------------------------------------------------------------------
 ClippyBackendError                        Traceback (most recent call last)
 <ipython-input-8-bf61ad375b31> in <module>

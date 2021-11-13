@@ -11,6 +11,7 @@ import uuid
 from subprocess import run
 from clippy.error import ClippyBackendError, ClippyValidationError
 from clippy.regcommand import get_registered_commands
+from clippy import config
 
 #  Set this to the clippy executable flag that does validation of stdin.
 DRY_RUN_FLAG = '--clippy-validate'
@@ -193,7 +194,7 @@ class Clippy:
         self.logger = logging.getLogger(self.uuid.hex)
         handler = logging.StreamHandler(sys.stderr)
         self.logger.addHandler(handler)
-        self.logger.setLevel(loglevel)
+        self.logger.setLevel(config.loglevel)
         self.logger.info(f'Logger set to {self.logger.getEffectiveLevel()}')
         self.add_namespaces(clippy_cfg)
 
@@ -262,8 +263,9 @@ class Clippy:
         Calls _exec.
         '''
 
-        self.logger.debug(f'Running {self.cmd_prefix + [cmd]}')
-        p = _exec(self.cmd_prefix + [cmd], submission_dict, self.logger)
+        cmd_prefix = config.cmd_prefix.split()
+        self.logger.debug(f'Running {cmd_prefix + [cmd]}')
+        p = _exec(cmd_prefix + [cmd], submission_dict, self.logger)
         if p.returncode:
             raise ClippyBackendError(p.stderr)
         self.logger.debug(f'Received stdout: {p.stdout}')
