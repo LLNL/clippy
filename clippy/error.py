@@ -31,3 +31,10 @@ class ClippyValidationError(ClippyError):
     This error represents a validation error in the inputs to a clippy job.
     '''
     pass
+
+
+class ClippyClassInconsistencyError(ClippyError):
+    '''
+    This error represents a class inconsistency error (name or docstring mismatch).
+    '''
+    pass
