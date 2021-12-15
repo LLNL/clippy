@@ -9,3 +9,8 @@ cmd_prefix = ''
 
 # contol the log level of clippy
 loglevel = 0
+
+# PRIVATE: this dict contains the class types that clippy has constructed.
+#          once constructed clippy will get the definition from this dict
+#          to create new instances.
+_dynamic_types = {}

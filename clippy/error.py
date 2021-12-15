@@ -31,3 +31,8 @@ class ClippyValidationError(ClippyError):
     This error represents a validation error in the inputs to a clippy job.
     '''
     pass
+
+class ClippySerializationError(ClippyError):
+    '''
+    This error should be thrown when clippy object serialization fails
+    '''
