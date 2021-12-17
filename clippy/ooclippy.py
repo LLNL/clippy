@@ -20,6 +20,7 @@ from clippy.error import ClippyValidationError, ClippyClassInconsistencyError
 
 DRY_RUN_FLAG = '--clippy-validate'
 JSON_FLAG = '--clippy-help'
+STATE_KEY = '__state__'
 
 
 ##
@@ -33,15 +34,15 @@ def createMetaclass(name, docstring):
     cls = type(name, (object,), clsdct)
 
     # set an empty object state
-    setattr(cls, "statedesc", [])
+    cls.__state__ = {}
     return cls
 
 
 def checkMetaclassConsistency(cls, name, docstring):
-    if getattr(cls, "__name__") != name:
+    if getattr(cls, "__name__", None) != name:
         raise ClippyClassInconsistencyError()
 
-    if getattr(cls, "__doc__") != docstring:
+    if getattr(cls, "__doc__", None) != docstring:
         raise ClippyClassInconsistencyError()
 
 
@@ -102,16 +103,15 @@ def defineMethod(cls, name, executable, arguments):
         Generic Method that calls an executable with specified arguments
         '''
 
-        statedesc = cls.statedesc
         argdict = {}
         statej  = {}
-        argdict["state"] = statej
-      
+
         # make json from args and state
 
         # .. add state
-        for key in statedesc:
-            statej[key] = getattr(self, key)
+        argdict[STATE_KEY] = cls.__state__
+        # ~ for key in statedesc:
+            # ~ statej[key] = getattr(self, key)
 
         # .. add positional arguments
         numpositionals = len(args)
@@ -134,12 +134,14 @@ def defineMethod(cls, name, executable, arguments):
         outj = json.loads(output)
 
         # update state according to json output
-        if "state" in outj:
-            statedesc.clear();
-            statej = outj["state"]
-            for key in statej:
-                statedesc.append(key)
-                setattr(self, key, statej[key])
+        if STATE_KEY in outj:
+            cls.__state__ = outj[STATE_KEY]
+
+            # ~ statedesc.clear();
+            # ~ statej = outj["state"]
+            # ~ for key in statej:
+                # ~ statedesc.append(key)
+                # ~ setattr(self, key, statej[key])
 
         # return result
         if "returns" in outj:
@@ -206,10 +208,10 @@ def processDirectory(directory, recurse_directories = False, symtable = None):
     '''
     Processes all executables in a directory.
     '''
-    
+
     if symtable is None:
         symtable = inspect.currentframe().f_back.f_locals
-    
+
     for el in os.scandir(directory):
         if os.access(el, os.X_OK):
             if el.is_file():
