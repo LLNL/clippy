@@ -14,6 +14,8 @@ from subprocess import run
 from subprocess import PIPE
 from clippy.error import ClippyBackendError, ClippyConfigurationError
 from clippy.error import ClippyValidationError, ClippyClassInconsistencyError
+from clippy.serialization import ClippySerializable, encode_clippy_json, decode_clippy_json
+from clippy.expression import Selector
 
 ##
 ## clippy flags
@@ -31,10 +33,8 @@ def createMetaclass(name, docstring):
     Creates a new class name, docstring, and underlying executable.
     '''
     clsdct = {"__doc__": docstring}
-    cls = type(name, (object,), clsdct)
+    cls = type(name, (ClippySerializable,), clsdct)
 
-    # set an empty object state
-    cls.__state__ = {}
     return cls
 
 
@@ -46,15 +46,13 @@ def checkMetaclassConsistency(cls, name, docstring):
         raise ClippyClassInconsistencyError()
 
 
-
-
 def callExecutable(executable, dct):
     '''
     converts the dictionsary dct into a json file and calls executable cmd
     '''
 
-    cmd_stdin = json.dumps(dct)
-
+    cmd_stdin = json.dumps(dct, default=encode_clippy_json)
+    print(f"[{executable}]>>>", cmd_stdin)
     # was: p = subprocess.run(execcmd, input=cmd_stdin, capture_output=True, encoding='ascii')
     # works also with older pythons
     p = run([executable], input=cmd_stdin, stdout=PIPE, encoding='ascii')
@@ -68,6 +66,7 @@ def callExecutable(executable, dct):
 
     # if we have no output, we still need SOMETHING to feed json.loads, so let's set it to a scalar 'null'.
     output = 'null' if not p.stdout else p.stdout
+    print(f"[{executable}]<<<", output)
     return output
 
 
@@ -76,7 +75,7 @@ def validateExecutable(executable, dct):
     converts the dictionsary dct into a json file and calls executable cmd
     '''
 
-    cmd_stdin = json.dumps(dct)
+    cmd_stdin = json.dumps(dct, default=encode_clippy_json)
 
     # was: p = subprocess.run(execcmd, input=cmd_stdin, capture_output=True, encoding='ascii')
     # works with older pythons
@@ -95,7 +94,8 @@ def validateExecutable(executable, dct):
     # self.logger.debug(f'Validation returning {ret}')
     return (ret, warn)
 
-
+def defineSelector(cls, name):
+    setattr(cls, name, Selector(None,name))
 
 def defineMethod(cls, name, executable, arguments):
     def m(self, *args, **kwargs):
@@ -103,13 +103,18 @@ def defineMethod(cls, name, executable, arguments):
         Generic Method that calls an executable with specified arguments
         '''
 
+        # special cases for __init__
+        # call the superclass to initialize the _state
+        if name == "__init__":
+            super(cls,self).__init__()
+
         argdict = {}
         statej  = {}
 
         # make json from args and state
 
         # .. add state
-        argdict[STATE_KEY] = cls.__state__
+        argdict[STATE_KEY] = self._state
         # ~ for key in statedesc:
             # ~ statej[key] = getattr(self, key)
 
@@ -126,16 +131,16 @@ def defineMethod(cls, name, executable, arguments):
             argdict[key] = value
 
         # validate
-        validateExecutable(executable, argdict)
+        #validateExecutable(executable, argdict)
 
         # call executable and create json output
         output = callExecutable(executable, argdict)
 
-        outj = json.loads(output)
+        outj = json.loads(output, object_hook=decode_clippy_json)
 
         # update state according to json output
         if STATE_KEY in outj:
-            cls.__state__ = outj[STATE_KEY]
+            self._state = outj[STATE_KEY]
 
             # ~ statedesc.clear();
             # ~ statej = outj["state"]
@@ -187,7 +192,8 @@ def processExecutable(executable, symtable):
     metaclassname = j["class_name"]
     docstring     = j["class_desc"]
     method        = j["method_name"]
-    args          = j["args"] if "args" in j else {}
+    args          = j.get("args", {})
+    selectors     = j.get("selectors", [])
 
     # check if metaclass exists already
     if metaclassname in symtable:
@@ -201,6 +207,9 @@ def processExecutable(executable, symtable):
 
     # add the methods
     defineMethod(metaclass, method, executable, args)
+    # add the selectors
+    for selector in selectors: 
+        defineSelector(metaclass,selector)
     return metaclass
 
 

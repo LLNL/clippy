@@ -91,8 +91,17 @@ def encode_clippy_json(o):
     """
     json encoder that is clippy-object aware.
     """
+    # FIXME - this works but we are close to creating a circular dependancy here 
+    #         as expression.py imports ClippySerializable from serialization.py.
+    #         rethink this design.
+    from clippy.expression import Expression
+    if isinstance(o, Expression):
+        return {"expression_type": "jsonlogic", "rule": o.to_serial()}
+    
     if isinstance(o, ClippySerializable):
         return o.to_serial()
+
+    
     return o
 
 def decode_clippy_json(o):
