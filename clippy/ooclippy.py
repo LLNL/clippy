@@ -20,8 +20,21 @@ from clippy.error import ClippyValidationError, ClippyClassInconsistencyError
 
 DRY_RUN_FLAG = '--clippy-validate'
 JSON_FLAG = '--clippy-help'
-STATE_KEY = '__state__'
 
+##
+## clippy constants
+
+STATE_KEY = '_state'
+CLASS_KEY = '_class'
+REAL = 'real'
+STRING = 'string'
+UINT = 'uint'
+INT = 'int'
+
+##
+## clippy globals
+
+clippyClasses = {}
 
 ##
 ## new functions
@@ -32,9 +45,12 @@ def createMetaclass(name, docstring):
     '''
     clsdct = {"__doc__": docstring}
     cls = type(name, (object,), clsdct)
+    # store class for posterity
+    clippyClasses[name] = cls
 
     # set an empty object state
-    cls.__state__ = {}
+    # cls._state = {}
+    setattr(cls, STATE_KEY, {})
     return cls
 
 
@@ -96,6 +112,24 @@ def validateExecutable(executable, dct):
     return (ret, warn)
 
 
+def processReturnValue(jsonValue):
+    '''
+    Tests if jsonValue corresponds to a new object(jsonValue is a dict and contains "_class" and "_state":
+      if true then create a new object and set the state
+      otherwhise just return the jsonValue
+    '''
+    requiresProcessing = isinstance(jsonValue, dict) and CLASS_KEY in jsonValue and STATE_KEY in jsonValue
+
+    if not requiresProcessing:
+        return jsonValue
+
+    # TODO: create a new class
+    clsName = jsonValue[CLASS_KEY]
+    cls = clippyClasses[clsName]
+    obj = object.__new__(cls)
+    setattr(obj, STATE_KEY, jsonValue[STATE_KEY])
+    return obj
+
 
 def defineMethod(cls, name, executable, arguments):
     def m(self, *args, **kwargs):
@@ -109,7 +143,8 @@ def defineMethod(cls, name, executable, arguments):
         # make json from args and state
 
         # .. add state
-        argdict[STATE_KEY] = cls.__state__
+        # argdict[STATE_KEY] = cls,_state
+        argdict[STATE_KEY] = getattr(cls, STATE_KEY)
         # ~ for key in statedesc:
             # ~ statej[key] = getattr(self, key)
 
@@ -135,7 +170,8 @@ def defineMethod(cls, name, executable, arguments):
 
         # update state according to json output
         if STATE_KEY in outj:
-            cls.__state__ = outj[STATE_KEY]
+            setattr(cls, STATE_KEY, outj[STATE_KEY])
+            # cls._state = outj[STATE_KEY]
 
             # ~ statedesc.clear();
             # ~ statej = outj["state"]
@@ -145,7 +181,7 @@ def defineMethod(cls, name, executable, arguments):
 
         # return result
         if "returns" in outj:
-            return outj["returns"]
+            return processReturnValue(outj["returns"])
 
         # todo: test if "result" is part of the description
         return None
