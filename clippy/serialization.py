@@ -42,6 +42,7 @@ class ClippySerializable(object):
         Subclasses should override this method to provide a custom deserialization from the python-primative data.
         This method should return a fully constructed object instance.
         """
+        
         if "__clippy_type__" not in o:
             raise ClippySerializationError("No clippy type detected")
 
@@ -94,6 +95,7 @@ def encode_clippy_json(o):
     # FIXME - this works but we are close to creating a circular dependancy here 
     #         as expression.py imports ClippySerializable from serialization.py.
     #         rethink this design.
+    # PP: question: would it work to have Expression override to_serial?
     from clippy.expression import Expression
     if isinstance(o, Expression):
         return {"expression_type": "jsonlogic", "rule": o.to_serial()}
@@ -101,14 +103,13 @@ def encode_clippy_json(o):
     if isinstance(o, ClippySerializable):
         return o.to_serial()
 
-    
     return o
 
 def decode_clippy_json(o):
     """
     json decoder that is clippy-object aware.
-
     """
     if "__clippy_type__" in o:
         return ClippySerializable.from_serial(o)
+            
     return o

@@ -17,6 +17,8 @@ from clippy.error import ClippyValidationError, ClippyClassInconsistencyError
 from clippy.serialization import ClippySerializable, encode_clippy_json, decode_clippy_json
 from clippy.expression import Selector
 
+from clippy import config
+
 ##
 ## clippy flags
 
@@ -36,7 +38,7 @@ INT = 'int'
 ##
 ## clippy globals
 
-clippyClasses = {}
+# seems to be supported by ClippySerializable
 
 ##
 ## new functions
@@ -46,16 +48,10 @@ def createMetaclass(name, docstring):
     Creates a new class name, docstring, and underlying executable.
     '''
     clsdct = {"__doc__": docstring}
-    #cls = type(name, (object,), clsdct)
     cls = type(name, (ClippySerializable,), clsdct)
+    # ~ setattr(cls, STATE_KEY, {}) -- set by ClippySerializable
     
-		# store class for posterity
-    clippyClasses[name] = cls
-
-    # set an empty object state
-    # cls._state = {}
-    setattr(cls, STATE_KEY, {})
-
+    config._dynamic_types[name] = cls ## should this be set by ClippySerializable?
     return cls
 
 
@@ -115,24 +111,23 @@ def validateExecutable(executable, dct):
     # self.logger.debug(f'Validation returning {ret}')
     return (ret, warn)
 
+# OBSOLETE:
+# ~ def processReturnValue(jsonValue):
+    # ~ '''
+    # ~ Tests if jsonValue corresponds to a new object(jsonValue is a dict and contains "_class" and "_state":
+      # ~ if true then create a new object and set the state
+      # ~ otherwhise just return the jsonValue
+    # ~ '''
+    # ~ requiresProcessing = isinstance(jsonValue, dict) and CLASS_KEY in jsonValue and STATE_KEY in jsonValue
 
-def processReturnValue(jsonValue):
-    '''
-    Tests if jsonValue corresponds to a new object(jsonValue is a dict and contains "_class" and "_state":
-      if true then create a new object and set the state
-      otherwhise just return the jsonValue
-    '''
-    requiresProcessing = isinstance(jsonValue, dict) and CLASS_KEY in jsonValue and STATE_KEY in jsonValue
-
-    if not requiresProcessing:
-        return jsonValue
-
+    # ~ if not requiresProcessing:
+        # ~ return jsonValue
+        
     # TODO: create a new class
-    clsName = jsonValue[CLASS_KEY]
-    cls = clippyClasses[clsName]
-    obj = object.__new__(cls)
-    setattr(obj, STATE_KEY, jsonValue[STATE_KEY])
-    return obj
+    #clsName = jsonValue[CLASS_KEY]
+    #obj = object.__new__(cls)
+    #setattr(obj, STATE_KEY, jsonValue[STATE_KEY])
+    #return obj
 
 def defineSelector(cls, name):
     setattr(cls, name, Selector(None,name))
@@ -154,7 +149,7 @@ def defineMethod(cls, name, executable, arguments):
         # make json from args and state
 
         # .. add state
-        # argdict[STATE_KEY] = self,_state
+        # argdict[STATE_KEY] = self._state
         argdict[STATE_KEY] = getattr(self, STATE_KEY)
         # ~ for key in statedesc:
             # ~ statej[key] = getattr(self, key)
@@ -190,9 +185,12 @@ def defineMethod(cls, name, executable, arguments):
                 # ~ statedesc.append(key)
                 # ~ setattr(self, key, statej[key])
 
+        # call needed??
         # return result
         if "returns" in outj:
-            return processReturnValue(outj["returns"])
+            return outj["returns"]
+            # ~ return decode_clippy_json(outj["returns"])
+            # ~ return processReturnValue(outj["returns"])
 
         # todo: test if "result" is part of the description
         return None
