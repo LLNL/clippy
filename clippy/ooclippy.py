@@ -185,14 +185,10 @@ def defineMethod(cls, name, executable, arguments):
                 # ~ statedesc.append(key)
                 # ~ setattr(self, key, statej[key])
 
-        # call needed??
         # return result
         if "returns" in outj:
             return outj["returns"]
-            # ~ return decode_clippy_json(outj["returns"])
-            # ~ return processReturnValue(outj["returns"])
 
-        # todo: test if "result" is part of the description
         return None
         # end of nested def m
 
@@ -229,11 +225,19 @@ def processExecutable(executable, symtable):
 
     j = json.loads(exe.stdout)
 
-    metaclassname = j["class_name"]
-    docstring     = j["class_desc"]
-    method        = j["method_name"]
+    metaclassname = j.get("class_name", None)
+    
+    # \todo try to load as Clippy function if no metaclassname is defined
+    if metaclassname is None:
+        raise ClippyConfigurationError("No class_name in " + executable)
+
+    docstring     = j.get("class_desc", None)
     args          = j.get("args", {})
     selectors     = j.get("selectors", [])
+    method        = j.get("method_name", None)
+    
+    if method is None:
+        raise ClippyConfigurationError("No method_name in " + executable)
 
     # check if metaclass exists already
     if metaclassname in symtable:

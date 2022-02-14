@@ -12,6 +12,7 @@ from subprocess import run
 from clippy.error import ClippyBackendError, ClippyValidationError
 from clippy.regcommand import get_registered_commands
 from clippy import config
+from clippy.serialization import encode_clippy_json, decode_clippy_json
 
 #  Set this to the clippy executable flag that does validation of stdin.
 DRY_RUN_FLAG = '--clippy-validate'
@@ -31,7 +32,9 @@ def _exec(execcmd, submission_dict, logger):
     '''
 
     logger.debug(f'Submission = {submission_dict}')
-    cmd_stdin = json.dumps(submission_dict)
+    # PP support passing objects
+    # ~ cmd_stdin = json.dumps(submission_dict)
+    cmd_stdin = json.dumps(submission_dict, default=encode_clippy_json)
     logger.debug(f'Calling {execcmd} with input {cmd_stdin}')
     p = run(execcmd, input=cmd_stdin, capture_output=True, encoding='ascii')
     logger.debug(f'run(): result = {p}')
@@ -274,7 +277,9 @@ class Clippy:
 
         # if we have no output, we still need SOMETHING to feed json.loads, so let's set it to a scalar 'null'.
         output = 'null' if not p.stdout else p.stdout
-        return json.loads(output)
+        # PP: enable functions to return known objects 
+        # was: return json.loads(output)
+        return json.loads(output, object_hook=decode_clippy_json)
 
 
 def logo():
