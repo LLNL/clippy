@@ -4,6 +4,11 @@
 # SPDX-License-Identifier: MIT
 
 
+
+##
+##
+
+
 import sys
 import os
 import inspect
@@ -205,9 +210,8 @@ def defineMethod(cls, name, executable, arguments):
     # ~ for el in apidesc:
         # ~ defineMethod(cls, el["method"], el["args"], statedesc)
         # ~ print('+ ' + el["method_name"])
-
-
-def processExecutable(executable, symtable):
+        
+def processMemberFunction(executable, symtable, j):
     '''
     Creates a class representing the executable, and stores the created class in symtable.
     details: The executable is queried for its description. The returned
@@ -215,16 +219,6 @@ def processExecutable(executable, symtable):
              the executable's methods and state. The type is recorded in the
              symtable (by default globals()).
     '''
-
-    cmd = [executable, JSON_FLAG]
-    # open file, will be received through std out
-    exe = run(cmd, stdout=PIPE)
-
-    if exe.returncode:
-        raise ClippyConfigurationError("Execution error " + str(exe.returncode))
-
-    j = json.loads(exe.stdout)
-
     metaclassname = j.get("class_name", None)
     
     # \todo try to load as Clippy function if no metaclassname is defined
@@ -255,6 +249,30 @@ def processExecutable(executable, symtable):
     for selector in selectors: 
         defineSelector(metaclass,selector)
     return metaclass
+        
+
+
+def processExecutable(executable, symtable):
+    '''
+    Creates a class representing the executable, and stores the created class in symtable.
+    details: The executable is queried for its description. The returned
+             json file is parsed and converted to a type representing
+             the executable's methods and state. The type is recorded in the
+             symtable (by default globals()).
+    '''
+
+    cmd = [executable, JSON_FLAG]
+    # open file, will be received through std out
+    exe = run(cmd, stdout=PIPE)
+
+    if exe.returncode:
+        raise ClippyConfigurationError("Execution error " + str(exe.returncode))
+
+    j = json.loads(exe.stdout)
+    
+    return processMemberFunction(executable, symtable, j)
+    
+    
 
 
 def processDirectory(directory, recurse_directories = False, symtable = None):

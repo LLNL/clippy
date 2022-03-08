@@ -55,6 +55,8 @@ def clippy_import(backend_path, namespace=None):
             nsobj = getattr(c, ns)
             for fn_name in nsobj.methods:
                 _bind_to_local_environment(caller_locals, nsobj, fn_name)
+            for class_name in nsobj.classes:
+                _bind_to_local_environment(caller_locals, nsobj, class_name)
     
 def _bind_to_local_environment(caller_locals, src_obj, src_name):
     if src_name in caller_locals:

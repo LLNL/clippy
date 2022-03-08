@@ -97,6 +97,7 @@ def encode_clippy_json(o):
     #         rethink this design.
     # PP: question: would it work to have Expression override to_serial?
     from clippy.expression import Expression
+    
     if isinstance(o, Expression):
         return {"expression_type": "jsonlogic", "rule": o.to_serial()}
     

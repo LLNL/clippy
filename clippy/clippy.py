@@ -8,6 +8,7 @@ import logging
 import sys
 import types
 import uuid
+import inspect
 from subprocess import run
 from clippy.error import ClippyBackendError, ClippyValidationError
 from clippy.regcommand import get_registered_commands
@@ -222,12 +223,18 @@ class Clippy:
 
             inner = type(namespace, (), {})
             setattr(inner, 'methods', [])
+            setattr(inner, 'classes', [])
 
             for name, jsondict in cmds.items():
-                cmd = Command(namespace, name, self, jsondict)
-                self.logger.debug(f'Adding registered command: {name}')
-                setattr(inner, name, types.MethodType(cmd.genfn(cmd.docstring), self))
-                inner.methods.append(name)
+                if not inspect.isclass(jsondict):
+                    self.logger.debug(f'Adding registered command: {name}')
+                    cmd = Command(namespace, name, self, jsondict)
+                    setattr(inner, name, types.MethodType(cmd.genfn(cmd.docstring), self))
+                    inner.methods.append(name)
+                else:
+                    print(f'{name} is a class');
+                    setattr(inner, name, jsondict)
+                    inner.classes.append(name)
 
             setattr(self, namespace, inner)
 

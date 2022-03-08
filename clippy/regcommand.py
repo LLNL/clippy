@@ -7,6 +7,7 @@ import pathlib
 import json
 import subprocess
 from clippy.error import ClippyConfigurationError
+from clippy.ooclippy import processMemberFunction
 
 CLIPPY_ENV = 'CLIPPY_ENV'
 CLIPPY_CFG = '.clippy'
@@ -51,10 +52,16 @@ def get_registered_commands(logger, cmd_dict=None):
                 else:
                     try:
                         j = json.loads(exe.stdout)
-                        j['exe_name'] = str(f)
                         ns = namespaces[namespace]
-                        ns[j['method_name']] = j
-                        logger.debug(f'Adding {f} to valid commands under namespace {namespace}')
+                                                
+                        ## test if this is a member function and defer to
+                        ## ooclippy if needed
+                        if j.get('class_name', None) is not None:
+                            processMemberFunction(f, ns, j)
+                        else:  
+                            j['exe_name'] = str(f)
+                            ns[j['method_name']] = j
+                            logger.debug(f'Adding {f} to valid commands under namespace {namespace}')
                     except json.JSONDecodeError:
                         logger.warn(f'JSON parsing error for {f} - ignoring')
 
