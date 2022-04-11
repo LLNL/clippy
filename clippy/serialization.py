@@ -42,7 +42,7 @@ class ClippySerializable(object):
         Subclasses should override this method to provide a custom deserialization from the python-primative data.
         This method should return a fully constructed object instance.
         """
-        
+
         if "__clippy_type__" not in o:
             raise ClippySerializationError("No clippy type detected")
 
@@ -51,10 +51,10 @@ class ClippySerializable(object):
         type_module = clippy_type.get("__module__", None)
         type_name = clippy_type.get("__class__", None)
         state_dict = clippy_type.get("state", None)
-        
+
         if type_name is None :
             raise ClippySerializationError("__clippy_type__.__class__ is unspecified")
-    
+
         if type_name not in config._dynamic_types:
             raise ClippySerializationError(f"\"{type_name}\" is not a known type, please clippy import it.")
 
@@ -67,7 +67,7 @@ class ClippySerializable(object):
 
         # create an instance of the clippy type but avoid initializing it
         # because it may have required args we don't care about.
-        # However we do want to call the ClippySerializable initializer 
+        # However we do want to call the ClippySerializable initializer
         # to give the instance the `state` attribute (and whatever else).
         instance = t.__new__(t)
         super(t, instance).__init__()
@@ -81,8 +81,8 @@ def _form_method_arguments(method_args):
     if method_args is None:
         return (),{}
 
-    method_args = sorted([(method_args[arg_name]["position"], 
-                           arg_name, 
+    method_args = sorted([(method_args[arg_name]["position"],
+                           arg_name,
                            method_args[arg_name]["arg_value"]) for arg_name in method_args])
     keyword_args = {arg[1]: arg[2] for arg in method_args if arg[0] == -1}
     positionals = [arg[2] for arg in method_args if arg[0] > -1]
@@ -92,15 +92,16 @@ def encode_clippy_json(o):
     """
     json encoder that is clippy-object aware.
     """
-    # FIXME - this works but we are close to creating a circular dependancy here 
+    # FIXME - this works but we are close to creating a circular dependancy here
     #         as expression.py imports ClippySerializable from serialization.py.
     #         rethink this design.
     # PP: question: would it work to have Expression override to_serial?
     from clippy.expression import Expression
-    
+
+    ## PP (04/11/21): note to self: do not change o.to_serial to o.to_json!!
     if isinstance(o, Expression):
         return {"expression_type": "jsonlogic", "rule": o.to_serial()}
-    
+
     if isinstance(o, ClippySerializable):
         return o.to_serial()
 
@@ -112,5 +113,5 @@ def decode_clippy_json(o):
     """
     if "__clippy_type__" in o:
         return ClippySerializable.from_serial(o)
-            
+
     return o

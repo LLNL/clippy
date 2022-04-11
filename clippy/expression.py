@@ -9,7 +9,7 @@ class Expression(ClippySerializable):
         self.o2 = o2
 
     def _express(self, op, o, **kwargs):
-        return Expression(op, self, o )
+        return Expression(op, self, o)
 
     def __lt__(self, o):
         return self._express("<", o)
@@ -51,6 +51,19 @@ class Expression(ClippySerializable):
         return self._express("^",o)
     def __or__(self, o):
         return self._express("or",o)
+    def __contains__(self, o):
+        raise NotImplementedError("syntax a in b is not supported. Use b.contains(a) instead.")
+        # will not work when written as "x in set",
+        #   b/c the in-operator always converts the result to bool
+        #   https://stackoverflow.com/questions/38542543/functionality-of-python-in-vs-contains
+        #   https://bugs.python.org/issue16011
+        # return Expression("in", o, self)
+
+    # to be modeled after Pandas' str.contains
+    def contains(self, o, regex=False):
+        oper = "in" if not regex else "regex"
+        return Expression(oper, o, self)
+#        return self._express(oper,o)
 
     def __str__(self):
         return self.to_json()
@@ -67,22 +80,28 @@ class Expression(ClippySerializable):
             o1 = o1.to_serial()
         if hasattr(o2, "to_serial"):
             o2 = o2.to_serial()
-        
+
         return {self.op: [o1, o2]}
 
 class Field(Expression):
     def __init__(self, name):
         self.name = name
 
+    # ~ def to_json(self):
+        # ~ return f"{{\"var\": [\"{self.name}\"]}}"
+
+    def to_serial(self):
+      return {"var": self.name}
+
     def _express(self, op, o, **kwargs):
-        return Expression(op, {"var": self.name}, o )
+        return Expression(op, self, o)
 
 class Selector:
     def __init__(self, parent, name):
         # not used at the moment but could be potentially used
-        # to get parent state information that can inform the 
+        # to get parent state information that can inform the
         # field/expression creation
-        self.parent = parent 
+        self.parent = parent
         self.name = name
 
     def __getattr__(self, key):

@@ -55,7 +55,7 @@ def createMetaclass(name, docstring):
     clsdct = {"__doc__": docstring}
     cls = type(name, (ClippySerializable,), clsdct)
     # ~ setattr(cls, STATE_KEY, {}) -- set by ClippySerializable
-    
+
     config._dynamic_types[name] = cls ## should this be set by ClippySerializable?
     return cls
 
@@ -127,7 +127,7 @@ def validateExecutable(executable, dct):
 
     # ~ if not requiresProcessing:
         # ~ return jsonValue
-        
+
     # TODO: create a new class
     #clsName = jsonValue[CLASS_KEY]
     #obj = object.__new__(cls)
@@ -210,7 +210,7 @@ def defineMethod(cls, name, executable, arguments):
     # ~ for el in apidesc:
         # ~ defineMethod(cls, el["method"], el["args"], statedesc)
         # ~ print('+ ' + el["method_name"])
-        
+
 def processMemberFunction(executable, symtable, j):
     '''
     Creates a class representing the executable, and stores the created class in symtable.
@@ -220,7 +220,7 @@ def processMemberFunction(executable, symtable, j):
              symtable (by default globals()).
     '''
     metaclassname = j.get("class_name", None)
-    
+
     # \todo try to load as Clippy function if no metaclassname is defined
     if metaclassname is None:
         raise ClippyConfigurationError("No class_name in " + executable)
@@ -229,7 +229,7 @@ def processMemberFunction(executable, symtable, j):
     args          = j.get("args", {})
     selectors     = j.get("selectors", [])
     method        = j.get("method_name", None)
-    
+
     if method is None:
         raise ClippyConfigurationError("No method_name in " + executable)
 
@@ -246,10 +246,10 @@ def processMemberFunction(executable, symtable, j):
     # add the methods
     defineMethod(metaclass, method, executable, args)
     # add the selectors
-    for selector in selectors: 
+    for selector in selectors:
         defineSelector(metaclass,selector)
     return metaclass
-        
+
 
 
 def processExecutable(executable, symtable):
@@ -269,10 +269,10 @@ def processExecutable(executable, symtable):
         raise ClippyConfigurationError("Execution error " + str(exe.returncode))
 
     j = json.loads(exe.stdout)
-    
+
     return processMemberFunction(executable, symtable, j)
-    
-    
+
+
 
 
 def processDirectory(directory, recurse_directories = False, symtable = None):
