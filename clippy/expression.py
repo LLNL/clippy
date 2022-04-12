@@ -65,6 +65,10 @@ class Expression(ClippySerializable):
         return Expression(oper, o, self)
 #        return self._express(oper,o)
 
+    # string and array concatenation
+    def cat(self, o):
+        return self._express("cat",o)
+
     def __str__(self):
         return self.to_json()
 
