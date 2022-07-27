@@ -70,14 +70,16 @@ def checkMetaclassConsistency(cls, name, docstring):
 
 def callExecutable(executable, dct):
     '''
-    converts the dictionsary dct into a json file and calls executable cmd
+    converts the dictionary dct into a json file and calls executable cmd
     '''
-
     cmd_stdin = json.dumps(dct, default=encode_clippy_json)
     # log: print(f"[{executable}]>>>", cmd_stdin)
     # was: p = subprocess.run(execcmd, input=cmd_stdin, capture_output=True, encoding='ascii')
     # works also with older pythons
-    p = run([executable], input=cmd_stdin, stdout=PIPE, encoding='ascii')
+    cmd_prefix = config.cmd_prefix.split()
+
+    # ~ print(cmd_prefix + [executable])
+    p = run(cmd_prefix + [executable], input=cmd_stdin, stdout=PIPE, encoding='ascii')
 
     if p.returncode:
         raise ClippyBackendError(p.stderr)
@@ -172,7 +174,7 @@ def defineMethod(cls, name, executable, arguments):
             argdict[key] = value
 
         # validate
-        #validateExecutable(executable, argdict)
+        validateExecutable(executable, argdict)
 
         # call executable and create json output
         output = callExecutable(executable, argdict)

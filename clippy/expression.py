@@ -105,9 +105,9 @@ class Selector:
         # not used at the moment but could be potentially used
         # to get parent state information that can inform the
         # field/expression creation
-        self.parent = parent
-        self.name = name
+        # self.parent = parent
+        self._fld_name_sel_08 = name
 
     def __getattr__(self, key):
-        field = Field(f"{self.name}.{key}")
+        field = Field(f"{self._fld_name_sel_08}.{key}")
         return field
