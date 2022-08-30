@@ -74,12 +74,9 @@ def callExecutable(executable, dct):
     '''
     cmd_stdin = json.dumps(dct, default=encode_clippy_json)
     # log: print(f"[{executable}]>>>", cmd_stdin)
-    # was: p = subprocess.run(execcmd, input=cmd_stdin, capture_output=True, encoding='ascii')
-    # works also with older pythons
     cmd_prefix = config.cmd_prefix.split()
 
-    # ~ print(cmd_prefix + [executable])
-    p = run(cmd_prefix + [executable], input=cmd_stdin, stdout=PIPE, encoding='ascii')
+    p = run(cmd_prefix + [executable], input=cmd_stdin, stdout=PIPE, encoding='utf-8')
 
     if p.returncode:
         raise ClippyBackendError(p.stderr)
@@ -101,9 +98,7 @@ def validateExecutable(executable, dct):
 
     cmd_stdin = json.dumps(dct, default=encode_clippy_json)
 
-    # was: p = subprocess.run(execcmd, input=cmd_stdin, capture_output=True, encoding='ascii')
-    # works with older pythons
-    p = run([executable, DRY_RUN_FLAG], input=cmd_stdin, stdout=PIPE, encoding='ascii')
+    p = run([executable, DRY_RUN_FLAG], input=cmd_stdin, stdout=PIPE, encoding='utf-8')
 
     if p.returncode:
         raise ClippyValidationError(p.stderr)

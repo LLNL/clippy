@@ -37,7 +37,7 @@ def _exec(execcmd, submission_dict, logger):
     # ~ cmd_stdin = json.dumps(submission_dict)
     cmd_stdin = json.dumps(submission_dict, default=encode_clippy_json)
     logger.debug(f'Calling {execcmd} with input {cmd_stdin}')
-    p = run(execcmd, input=cmd_stdin, capture_output=True, encoding='ascii')
+    p = run(execcmd, input=cmd_stdin, capture_output=True, encoding='utf-8')
     logger.debug(f'run(): result = {p}')
     return p
 
@@ -284,7 +284,7 @@ class Clippy:
 
         # if we have no output, we still need SOMETHING to feed json.loads, so let's set it to a scalar 'null'.
         output = 'null' if not p.stdout else p.stdout
-        # PP: enable functions to return known objects 
+        # PP: enable functions to return known objects
         # was: return json.loads(output)
         return json.loads(output, object_hook=decode_clippy_json)
 
