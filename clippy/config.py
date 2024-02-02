@@ -7,6 +7,11 @@
 # for instance, if using slurm this could be set to 'srun -n1 -ppdebug'
 cmd_prefix = ''
 
+# command prefix used to specify clippy task management with the HPC cluster
+# for dry runs in certain environments. For instance, if using slurm this
+# could be set to 'srun -n1 -ppdebug'
+validate_cmd_prefix = ''
+
 # contol the log level of clippy
 loglevel = 0
 
