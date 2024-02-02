@@ -252,7 +252,8 @@ class Clippy:
         Calls _exec.
         '''
         self.logger.debug(f'Validating {cmd}')
-        p = _exec([cmd, DRY_RUN_FLAG], submission_dict, self.logger)
+        validate_cmd_prefix = config.validate_cmd_prefix.split()
+        p = _exec(validate_cmd_prefix + [cmd, DRY_RUN_FLAG], submission_dict, self.logger)
         if p.returncode:
             raise ClippyValidationError(p.stderr)
 
