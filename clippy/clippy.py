@@ -15,7 +15,7 @@ from clippy.regcommand import get_registered_commands
 from clippy import config, AnyDict
 from clippy.serialization import encode_clippy_json, decode_clippy_json
 
-from typing import Any, List, Dict, Callable, Optional, Sequence, Tuple, Union, TYPE_CHECKING
+from typing import Callable, List, Optional, Sequence, Tuple, TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
     from subprocess import CompletedProcess
