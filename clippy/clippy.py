@@ -12,14 +12,20 @@ import inspect
 from subprocess import run
 from clippy.error import ClippyBackendError, ClippyValidationError
 from clippy.regcommand import get_registered_commands
-from clippy import config
+from clippy import config, AnyDict
 from clippy.serialization import encode_clippy_json, decode_clippy_json
 
+from typing import Callable, List, Optional, Sequence, Tuple, TYPE_CHECKING, Union
+
+if TYPE_CHECKING:
+    from subprocess import CompletedProcess
+
+
 #  Set this to the clippy executable flag that does validation of stdin.
-DRY_RUN_FLAG = '--clippy-validate'
+DRY_RUN_FLAG: str = '--clippy-validate'
 
 
-def _exec(execcmd, submission_dict, logger):
+def _exec(execcmd: Union[str, Sequence[str]], submission_dict: AnyDict, logger: logging.Logger) -> CompletedProcess:
     '''
     Internal function.
 
@@ -47,18 +53,18 @@ class Command():
     An object that contains information relating to valid back-end commands.
     '''
 
-    def __init__(self, namespace, name, session, jsondict):
+    def __init__(self, namespace: str, name: str, session: "Clippy", jsondict: AnyDict):
         self.namespace = namespace
         self.name = name  # name of method
         self.session = session
         self.jsondict = jsondict
-        self.positionals = {}
+        self.positionals: AnyDict = {}
         for (arg, argparams) in self.args.items():   # self.args is defined below as a @property
             if argparams.get('position', -1) != -1:  # if position is not -1, this is a 0-indexed positional arg.
                 self.session.logger.debug(f'  adding positional {arg} at {argparams["position"]}.')
                 self.positionals[argparams['position']] = arg
 
-    def genfn(self, docstring):
+    def genfn(self, docstring: str) -> Callable:
         '''
         Generates a function and sets its docstring.
         The returned function is used to dynamically
@@ -103,13 +109,13 @@ class Command():
         return f
 
     @property
-    def args(self):
+    def args(self) -> AnyDict:
         return self.jsondict.get('args', {})
 
     @property
-    def docstring(self):
-        posargs = [None] * len(self.args)  # we're probably overallocating here but whatever.
-        optargs = []
+    def docstring(self) -> str:
+        posargs: List[Optional[Tuple[str, AnyDict]]] = [None] * len(self.args)  # we're probably overallocating here but whatever.
+        optargs: List[Tuple[str, AnyDict]] = []
         numpos = -1
 
         # sort the args into positional and optional.
@@ -147,7 +153,7 @@ class Command():
 # }
         # build the docstring.
         docstring = f'{self.name}('
-        posnames = [a[0] for a in posargs]
+        posnames = [a[0] for a in posargs if a is not None]
         docstring += ", ".join(posnames)
         optnames = [f'{a[0]}={str(a[1].get("default_val", None))}' for a in optargs]
         docstring += ','.join(optnames)
@@ -157,12 +163,13 @@ class Command():
         docstring += '\n'
         docstring += 'Parameters:\n'
         for a in posargs:
-            docstring += f'{a[0]}: {a[1].get("type", "Unknown type")}\n'
-            docstring += f'\t{a[1].get("desc","No description.")}\n'
+            if a is not None:
+                docstring += f'{a[0]}: {a[1].get("type", "Unknown type")}\n'
+                docstring += f'\t{a[1].get("desc", "No description.")}\n'
 
         for a in optargs:
             docstring += f'{a[0]}: {a[1].get("type", "Unknown type")}, default={str(a[1].get("default_val", None))}\n'
-            docstring += f'\t{a[1].get("desc","No description.")}\n'
+            docstring += f'\t{a[1].get("desc", "No description.")}\n'
         docstring += '\n'
         retname = self.returns.get('name', '')
         if retname:
@@ -173,36 +180,37 @@ class Command():
         return docstring
 
     @property
-    def method_name(self):
+    def method_name(self) -> str:
         return self.jsondict.get('method_name', self.name)
 
     @property
-    def exe_name(self):
+    def exe_name(self) -> str:
         return self.jsondict.get('exe_name', self.name)
 
     @property
-    def desc(self):
+    def desc(self) -> str:
         return self.jsondict.get('desc', 'No description')
 
     @property
-    def returns(self):
+    def returns(self) -> AnyDict:
         return self.jsondict.get('returns', {})
 
 
 class Clippy:
-    def __init__(self, clippy_cfg=None, cmd_prefix='', loglevel=0):
+    def __init__(self, clippy_cfg: Optional[AnyDict] = None, cmd_prefix: str = '', loglevel: int = 0):
         self.clippy_cfg = clippy_cfg
         self.cmd_prefix = cmd_prefix.split()
-        self.namespaces = []
+        self.namespaces: List[str] = []
         self.uuid = uuid.uuid4()
         self.logger = logging.getLogger(self.uuid.hex)
         handler = logging.StreamHandler(sys.stderr)
         self.logger.addHandler(handler)
         self.logger.setLevel(config.loglevel)
         self.logger.info(f'Logger set to {self.logger.getEffectiveLevel()}')
-        self.add_namespaces(clippy_cfg)
+        if clippy_cfg is not None:
+            self.add_namespaces(clippy_cfg)
 
-    def add_namespaces(self, cmd_dict):
+    def add_namespaces(self, cmd_dict: AnyDict):
         '''
         Adds namespaces to / replaces namespaces in a current
         Clippy object. Namespaces should be a dictionary
@@ -230,18 +238,17 @@ class Clippy:
                     self.logger.debug(f'Adding registered command: {name}')
                     cmd = Command(namespace, name, self, jsondict)
                     setattr(inner, name, types.MethodType(cmd.genfn(cmd.docstring), self))
-                    inner.methods.append(name)
+                    inner.methods.append(name)  # type: ignore
                 else:
-                    print(f'{name} is a class');
+                    print(f'{name} is a class')  # TODO: is this a debug statement?
                     setattr(inner, name, jsondict)
-                    inner.classes.append(name)
-
+                    inner.classes.append(name)  # type: ignore
             setattr(self, namespace, inner)
 
     def logo(self):
         logo()
 
-    def _validate(self, cmd, submission_dict):
+    def _validate(self, cmd: str, submission_dict: AnyDict) -> Tuple[bool, str]:
         '''
         Internal command.
 
@@ -266,7 +273,7 @@ class Clippy:
         self.logger.debug(f'Validation returning {ret}')
         return (ret, warn)
 
-    def _run(self, cmd, submission_dict):
+    def _run(self, cmd: str, submission_dict: AnyDict) -> AnyDict:
         '''
         Processes a submission locally (no remote server).
         Returns a Python dictionary of results, or throws

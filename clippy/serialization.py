@@ -1,8 +1,12 @@
-import json
 from clippy.error import ClippySerializationError
-from clippy import config
+from clippy import config, AnyDict
 
-class ClippySerializable(object):
+from typing import Any, Dict, List, Optional, Self, Tuple
+
+
+# TODO: SAB 20240204 complete typing here.
+
+class ClippySerializable():
     """
     Declares the interface for serializing clippy objects. Subclass should inherit from this class to
     be serializable as part of the clippy frontend/backend communication infrustructure.
@@ -22,22 +26,23 @@ class ClippySerializable(object):
 
     """
 
-
     def __init__(self):
         self._state = {}
 
-    def to_serial(self):
+    def to_serial(self) -> AnyDict:
         """
         Subclasses should override this method to provide a custom serialization of the object instance.
-        This method should return a python-primative (dict, list, str, etc) version of the instance state
+        This method should return a python-primitive (dict, list, str, etc) version of the instance state
         """
         return {"__clippy_type__": {
-                    "__module__": self.__class__.__module__,
-                    "__class__":self.__class__.__name__,
-                    "state": self._state
-                }}
+                "__module__": self.__class__.__module__,
+                "__class__": self.__class__.__name__,
+                "state": self._state
+                }
+                }
 
-    def from_serial(o):
+    @classmethod
+    def from_serial(cls, o: AnyDict) -> Self:
         """
         Subclasses should override this method to provide a custom deserialization from the python-primative data.
         This method should return a fully constructed object instance.
@@ -46,13 +51,14 @@ class ClippySerializable(object):
         if "__clippy_type__" not in o:
             raise ClippySerializationError("No clippy type detected")
 
-        clippy_type  = o["__clippy_type__"]
+        clippy_type = o["__clippy_type__"]
+        assert isinstance(clippy_type, Dict)
         # right now we aren't using the module but  probably should
-        type_module = clippy_type.get("__module__", None)
+        # type_module = clippy_type.get("__module__", None)
         type_name = clippy_type.get("__class__", None)
         state_dict = clippy_type.get("state", None)
 
-        if type_name is None :
+        if type_name is None:
             raise ClippySerializationError("__clippy_type__.__class__ is unspecified")
 
         if type_name not in config._dynamic_types:
@@ -77,18 +83,20 @@ class ClippySerializable(object):
             instance._state.update(state_dict)
         return instance
 
-def _form_method_arguments(method_args):
-    if method_args is None:
-        return (),{}
 
-    method_args = sorted([(method_args[arg_name]["position"],
-                           arg_name,
-                           method_args[arg_name]["arg_value"]) for arg_name in method_args])
-    keyword_args = {arg[1]: arg[2] for arg in method_args if arg[0] == -1}
-    positionals = [arg[2] for arg in method_args if arg[0] > -1]
+def _form_method_arguments(method_args: Optional[AnyDict]) -> Tuple[List[Any], AnyDict]:
+    if method_args is None:
+        return [], {}
+
+    sorted_method_args = sorted([(method_args[arg_name]["position"],
+                                arg_name,
+                                method_args[arg_name]["arg_value"]) for arg_name in method_args])
+    keyword_args = {arg[1]: arg[2] for arg in sorted_method_args if arg[0] == -1}
+    positionals = [arg[2] for arg in sorted_method_args if arg[0] > -1]
     return (positionals, keyword_args)
 
-def encode_clippy_json(o):
+
+def encode_clippy_json(o: Any) -> Any:
     """
     json encoder that is clippy-object aware.
     """
@@ -98,7 +106,7 @@ def encode_clippy_json(o):
     # PP: question: would it work to have Expression override to_serial?
     from clippy.expression import Expression
 
-    ## PP (04/11/21): note to self: do not change o.to_serial to o.to_json!!
+    # PP (04/11/21): note to self: do not change o.to_serial to o.to_json!!
     if isinstance(o, Expression):
         return {"expression_type": "jsonlogic", "rule": o.to_serial()}
 
@@ -107,7 +115,8 @@ def encode_clippy_json(o):
 
     return o
 
-def decode_clippy_json(o):
+
+def decode_clippy_json(o: Any) -> Any:
     """
     json decoder that is clippy-object aware.
     """

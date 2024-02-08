@@ -32,11 +32,13 @@ class ClippyValidationError(ClippyError):
     '''
     pass
 
+
 class ClippySerializationError(ClippyError):
     '''
     This error should be thrown when clippy object serialization fails
     '''
     pass
+
 
 class ClippyClassInconsistencyError(ClippyError):
     '''

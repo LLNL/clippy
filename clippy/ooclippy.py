@@ -3,13 +3,10 @@
 #
 # SPDX-License-Identifier: MIT
 
-
-
 ##
 ##
 
 
-import sys
 import os
 import inspect
 import json
@@ -22,16 +19,17 @@ from clippy.error import ClippyValidationError, ClippyClassInconsistencyError
 from clippy.serialization import ClippySerializable, encode_clippy_json, decode_clippy_json
 from clippy.expression import Selector
 
-from clippy import config
+from clippy import config, AnyDict
+from typing import List, Optional
 
 ##
-## clippy flags
+# clippy flags
 
 DRY_RUN_FLAG = '--clippy-validate'
 JSON_FLAG = '--clippy-help'
 
 ##
-## clippy constants
+# clippy constants
 
 STATE_KEY = '_state'
 CLASS_KEY = '_class'
@@ -41,14 +39,15 @@ UINT = 'uint'
 INT = 'int'
 
 ##
-## clippy globals
+# clippy globals
 
 # seems to be supported by ClippySerializable
 
 ##
-## new functions
+# new functions
 
-def createMetaclass(name, docstring):
+
+def createMetaclass(name: str, docstring: str):
     '''
     Creates a new class name, docstring, and underlying executable.
     '''
@@ -56,11 +55,11 @@ def createMetaclass(name, docstring):
     cls = type(name, (ClippySerializable,), clsdct)
     # ~ setattr(cls, STATE_KEY, {}) -- set by ClippySerializable
 
-    config._dynamic_types[name] = cls ## should this be set by ClippySerializable?
+    config._dynamic_types[name] = cls  # should this be set by ClippySerializable?
     return cls
 
 
-def checkMetaclassConsistency(cls, name, docstring):
+def checkMetaclassConsistency(cls, name: str, docstring: str):
     if getattr(cls, "__name__", None) != name:
         raise ClippyClassInconsistencyError()
 
@@ -68,7 +67,7 @@ def checkMetaclassConsistency(cls, name, docstring):
         raise ClippyClassInconsistencyError()
 
 
-def callExecutable(executable, dct):
+def callExecutable(executable: str, dct: AnyDict):
     '''
     converts the dictionary dct into a json file and calls executable cmd
     '''
@@ -91,7 +90,7 @@ def callExecutable(executable, dct):
     return output
 
 
-def validateExecutable(executable, dct):
+def validateExecutable(executable: str, dct: AnyDict):
     '''
     converts the dictionsary dct into a json file and calls executable cmd
     '''
@@ -117,24 +116,26 @@ def validateExecutable(executable, dct):
 # ~ def processReturnValue(jsonValue):
     # ~ '''
     # ~ Tests if jsonValue corresponds to a new object(jsonValue is a dict and contains "_class" and "_state":
-      # ~ if true then create a new object and set the state
-      # ~ otherwhise just return the jsonValue
+    #    ~ if true then create a new object and set the state
+    #    ~ otherwhise just return the jsonValue
     # ~ '''
     # ~ requiresProcessing = isinstance(jsonValue, dict) and CLASS_KEY in jsonValue and STATE_KEY in jsonValue
 
     # ~ if not requiresProcessing:
-        # ~ return jsonValue
+    #     ~ return jsonValue
 
     # TODO: create a new class
-    #clsName = jsonValue[CLASS_KEY]
-    #obj = object.__new__(cls)
-    #setattr(obj, STATE_KEY, jsonValue[STATE_KEY])
-    #return obj
+    # clsName = jsonValue[CLASS_KEY]
+    # obj = object.__new__(cls)
+    # setattr(obj, STATE_KEY, jsonValue[STATE_KEY])
+    # return obj
 
-def defineSelector(cls, name):
-    setattr(cls, name, Selector(None,name))
 
-def defineMethod(cls, name, executable, arguments):
+def defineSelector(cls, name: str):
+    setattr(cls, name, Selector(None, name))
+
+
+def defineMethod(cls, name: str, executable: str, arguments: Optional[List[str]]):
     def m(self, *args, **kwargs):
         '''
         Generic Method that calls an executable with specified arguments
@@ -143,10 +144,10 @@ def defineMethod(cls, name, executable, arguments):
         # special cases for __init__
         # call the superclass to initialize the _state
         if name == "__init__":
-            super(cls,self).__init__()
+            super(cls, self).__init__()
 
         argdict = {}
-        statej  = {}
+        # statej  = {}
 
         # make json from args and state
 
@@ -154,7 +155,7 @@ def defineMethod(cls, name, executable, arguments):
         # argdict[STATE_KEY] = self._state
         argdict[STATE_KEY] = getattr(self, STATE_KEY)
         # ~ for key in statedesc:
-            # ~ statej[key] = getattr(self, key)
+        #     ~ statej[key] = getattr(self, key)
 
         # .. add positional arguments
         numpositionals = len(args)
@@ -184,8 +185,8 @@ def defineMethod(cls, name, executable, arguments):
             # ~ statedesc.clear();
             # ~ statej = outj["state"]
             # ~ for key in statej:
-                # ~ statedesc.append(key)
-                # ~ setattr(self, key, statej[key])
+            #    ~ statedesc.append(key)
+            #    ~ setattr(self, key, statej[key])
 
         # return result
         if "returns" in outj:
@@ -205,10 +206,10 @@ def defineMethod(cls, name, executable, arguments):
     # ~ '''
 
     # ~ for el in apidesc:
-        # ~ defineMethod(cls, el["method"], el["args"], statedesc)
-        # ~ print('+ ' + el["method_name"])
+    #       ~ defineMethod(cls, el["method"], el["args"], statedesc)
+    #       ~ print('+ ' + el["method_name"])
 
-def processMemberFunction(executable, symtable, j):
+def processMemberFunction(executable: str, symtable: AnyDict, j: AnyDict):
     '''
     Creates a class representing the executable, and stores the created class in symtable.
     details: The executable is queried for its description. The returned
@@ -222,10 +223,10 @@ def processMemberFunction(executable, symtable, j):
     if metaclassname is None:
         raise ClippyConfigurationError("No class_name in " + executable)
 
-    docstring     = j.get("class_desc", None)
-    args          = j.get("args", {})
-    selectors     = j.get("selectors", [])
-    method        = j.get("method_name", None)
+    docstring = j.get("class_desc", None)
+    args = j.get("args", {})
+    selectors = j.get("selectors", [])
+    method = j.get("method_name", None)
 
     if method is None:
         raise ClippyConfigurationError("No method_name in " + executable)
@@ -244,12 +245,11 @@ def processMemberFunction(executable, symtable, j):
     defineMethod(metaclass, method, executable, args)
     # add the selectors
     for selector in selectors:
-        defineSelector(metaclass,selector)
+        defineSelector(metaclass, selector)
     return metaclass
 
 
-
-def processExecutable(executable, symtable):
+def processExecutable(executable: str, symtable: AnyDict):
     '''
     Creates a class representing the executable, and stores the created class in symtable.
     details: The executable is queried for its description. The returned
@@ -270,26 +270,31 @@ def processExecutable(executable, symtable):
     return processMemberFunction(executable, symtable, j)
 
 
-
-
-def processDirectory(directory, recurse_directories = False, symtable = None):
+def processDirectory(directory: str, recurse_directories: bool = False, symtable: Optional[AnyDict] = None):
     '''
     Processes all executables in a directory.
     '''
 
     if symtable is None:
-        symtable = inspect.currentframe().f_back.f_locals
+        currframe = inspect.currentframe()
+        if currframe is not None and currframe.f_back is not None:
+            symtable = currframe.f_back.f_locals
+        else:
+            symtable = {}
 
     for el in os.scandir(directory):
         if os.access(el, os.X_OK):
+            str_el = os.fsdecode(el)
             if el.is_file():
-                processExecutable(el, symtable)
+                processExecutable(str_el, symtable)
             elif recurse_directories and el.is_dir():
-                processDirectory(el, True, symtable)
+                processDirectory(str_el, True, symtable)
+            else:
+                pass
 
 
 ##
-## main (simple tester)
+# main (simple tester)
 
 # ~ if __name__ == "__main__":
     # ~ processDirectory("./bin/howdy")
@@ -310,4 +315,3 @@ def processDirectory(directory, recurse_directories = False, symtable = None):
     # ~ pprint(g)
     # ~ pprint(Greeter)
     # ~ sys.exit(0)
-
