@@ -30,4 +30,4 @@ jobs:
 
       - name: MyPy
         run: |
-          mypy clippy --ignore-missing-imports
+          mypy src/clippy --ignore-missing-imports
