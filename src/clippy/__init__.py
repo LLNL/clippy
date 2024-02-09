@@ -4,8 +4,12 @@
 # SPDX-License-Identifier: MIT
 
 import warnings
-from clippy.clippy import Clippy
+from .clippy import Clippy
+from .clippy import config
 import inspect
+
+import importlib.metadata
+__version__ = importlib.metadata.version("llnl-clippy")
 
 class ClippyRebindWarning(UserWarning):
     pass
@@ -63,3 +67,11 @@ def _bind_to_local_environment(caller_locals, src_obj, src_name):
         warnings.warn(f"{src_name} already exists in local environment, skipping rebind...", ClippyRebindWarning)
         return
     caller_locals[src_name] = getattr(src_obj, src_name)
+
+
+__all__ = [
+    'Clippy',
+    'config',
+    'clippy_import',
+    '__version__',
+]

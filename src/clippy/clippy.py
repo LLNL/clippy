@@ -15,6 +15,7 @@ from clippy.regcommand import get_registered_commands
 from clippy import config
 from clippy.serialization import encode_clippy_json, decode_clippy_json
 
+
 #  Set this to the clippy executable flag that does validation of stdin.
 DRY_RUN_FLAG = '--clippy-validate'
 
