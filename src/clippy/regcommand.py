@@ -5,16 +5,24 @@
 
 import pathlib
 import json
+import os
 import subprocess
 from clippy.error import ClippyConfigurationError
 from clippy.ooclippy import processMemberFunction
+from clippy import AnyDict
+
+from typing import Dict, List, Optional, TYPE_CHECKING
+
+
+if TYPE_CHECKING:
+    import logging
 
 CLIPPY_ENV = 'CLIPPY_ENV'
 CLIPPY_CFG = '.clippy'
 JSON_FLAG = '--clippy-help'
 
 
-def _is_exe(f):
+def _is_exe(f: pathlib.Path):
     '''
     Returns true if `f` is an executable file.
     '''
@@ -26,7 +34,7 @@ def _is_exe(f):
     return '7' in s
 
 
-def get_registered_commands(logger, cmd_dict=None):
+def get_registered_commands(logger: logging.Logger, cmd_dict: Optional[Dict[str, pathlib.Path]] = None) -> Dict[str, AnyDict]:
     '''
     Returns a dictionary of namespaces with keys of str (representing the namespace)
     and values of dict, with keys of method names, and vals of dicts representing
@@ -34,7 +42,9 @@ def get_registered_commands(logger, cmd_dict=None):
     Error as appropriate.
     '''
 
-    namespaces = {}
+    namespaces: Dict[str, AnyDict] = {}
+    if cmd_dict is None:
+        return namespaces
     for namespace, path in cmd_dict.items():
         p = pathlib.Path(path)
         if not p.is_dir():
@@ -44,26 +54,26 @@ def get_registered_commands(logger, cmd_dict=None):
         for f in p.iterdir():
             logger.debug(f"trying {f}")
             if _is_exe(f):
-                logger.debug(f'running {f} {JSON_FLAG}')
-                cmd = [f, JSON_FLAG]
+                fstr = os.fsdecode(f)
+                logger.debug(f'running {fstr} {JSON_FLAG}')
+                cmd: List[str] = [fstr, JSON_FLAG]
                 exe = subprocess.run(cmd, capture_output=True)
                 if exe.returncode:
-                    logger.warn(f'{f} exited with error code {exe.returncode} - ignoring')
+                    logger.warn(f'{fstr} exited with error code {exe.returncode} - ignoring')
                 else:
                     try:
                         j = json.loads(exe.stdout)
                         ns = namespaces[namespace]
-                                                
-                        ## test if this is a member function and defer to
-                        ## ooclippy if needed
+                        # test if this is a member function and defer to
+                        # ooclippy if needed
                         if j.get('class_name', None) is not None:
-                            processMemberFunction(f, ns, j)
-                        else:  
-                            j['exe_name'] = str(f)
+                            processMemberFunction(fstr, ns, j)
+                        else:
+                            j['exe_name'] = fstr
                             ns[j['method_name']] = j
-                            logger.debug(f'Adding {f} to valid commands under namespace {namespace}')
+                            logger.debug(f'Adding {fstr} to valid commands under namespace {namespace}')
                     except json.JSONDecodeError:
-                        logger.warn(f'JSON parsing error for {f} - ignoring')
+                        logger.warn(f'JSON parsing error for {fstr} - ignoring')
 
     logger.debug(f"namespaces = {namespaces}")
     return namespaces
