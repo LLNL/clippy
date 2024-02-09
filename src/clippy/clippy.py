@@ -114,7 +114,8 @@ class Command():
 
     @property
     def docstring(self) -> str:
-        posargs: List[Optional[Tuple[str, AnyDict]]] = [None] * len(self.args)  # we're probably overallocating here but whatever.
+        # we're probably overallocating here but whatever.
+        posargs: List[Optional[Tuple[str, AnyDict]]] = [None] * len(self.args)
         optargs: List[Tuple[str, AnyDict]] = []
         numpos = -1
 
