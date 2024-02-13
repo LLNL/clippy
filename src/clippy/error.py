@@ -45,3 +45,10 @@ class ClippyClassInconsistencyError(ClippyError):
     This error represents a class inconsistency error (name or docstring mismatch).
     '''
     pass
+
+
+class ClippyTypeError(ClippyError):
+    '''
+    This error represents an error with the type of data being passed to the back end.
+    '''
+    pass

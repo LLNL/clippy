@@ -12,15 +12,19 @@ import inspect
 import json
 
 # ~ from pprint import pprint
-from subprocess import run
-from subprocess import PIPE
-from clippy.error import ClippyBackendError, ClippyConfigurationError
-from clippy.error import ClippyValidationError, ClippyClassInconsistencyError
+from subprocess import run, PIPE
+from clippy import config, AnyDict
+from clippy.error import (
+    ClippyBackendError,
+    ClippyConfigurationError,
+    ClippyValidationError,
+    ClippyClassInconsistencyError,
+    ClippyTypeError
+)
 from clippy.serialization import ClippySerializable, encode_clippy_json, decode_clippy_json
 from clippy.expression import Selector
 
-from clippy import config, AnyDict
-from typing import List, Optional
+from typing import Dict, List, Optional, Tuple
 
 ##
 # clippy flags
@@ -47,7 +51,7 @@ INT = 'int'
 # new functions
 
 
-def createMetaclass(name: str, docstring: str):
+def createMetaclass(name: str, docstring: Optional[str]):
     '''
     Creates a new class name, docstring, and underlying executable.
     '''
@@ -59,7 +63,7 @@ def createMetaclass(name: str, docstring: str):
     return cls
 
 
-def checkMetaclassConsistency(cls, name: str, docstring: str):
+def checkMetaclassConsistency(cls, name: str, docstring: Optional[str]):
     if getattr(cls, "__name__", None) != name:
         raise ClippyClassInconsistencyError()
 
@@ -67,7 +71,7 @@ def checkMetaclassConsistency(cls, name: str, docstring: str):
         raise ClippyClassInconsistencyError()
 
 
-def callExecutable(executable: str, dct: AnyDict):
+def callExecutable(executable: str, dct: AnyDict) -> str:
     '''
     converts the dictionary dct into a json file and calls executable cmd
     '''
@@ -90,9 +94,9 @@ def callExecutable(executable: str, dct: AnyDict):
     return output
 
 
-def validateExecutable(executable: str, dct: AnyDict):
+def validateExecutable(executable: str, dct: AnyDict) -> Tuple[bool, str]:
     '''
-    converts the dictionsary dct into a json file and calls executable cmd
+    converts the dictionary dct into a json file and calls executable cmd
     '''
 
     cmd_stdin = json.dumps(dct, default=encode_clippy_json)
@@ -162,12 +166,11 @@ def defineMethod(cls, name: str, executable: str, arguments: Optional[List[str]]
         for argdesc in arguments:
             value = arguments[argdesc]
             if "position" in value:
-                if value["position"] >= 0 and value["position"] < numpositionals:
+                if 0 <= value["position"] < numpositionals:
                     argdict[argdesc] = args[value["position"]]
 
         # .. add keyword arguments
-        for key, value in kwargs.items():
-            argdict[key] = value
+        argdict.update(kwargs)
 
         # validate
         validateExecutable(executable, argdict)
@@ -176,6 +179,19 @@ def defineMethod(cls, name: str, executable: str, arguments: Optional[List[str]]
         output = callExecutable(executable, argdict)
 
         outj = json.loads(output, object_hook=decode_clippy_json)
+
+        # if we have results that have keys that are in our
+        # kwargs, let's update the kwarg references. Works
+        # for lists and dicts only.
+        for kw, kwval in kwargs.items():
+            if kw in outj:
+                kwval.clear()
+                if isinstance(kwval, Dict):
+                    kwval.update(outj[kw])
+                elif isinstance(kwval, List):
+                    kwval += outj[kw]
+                else:
+                    raise ClippyTypeError()
 
         # update state according to json output
         if STATE_KEY in outj:
@@ -189,10 +205,8 @@ def defineMethod(cls, name: str, executable: str, arguments: Optional[List[str]]
             #    ~ setattr(self, key, statej[key])
 
         # return result
-        if "returns" in outj:
-            return outj["returns"]
+        return outj.get("returns")
 
-        return None
         # end of nested def m
 
     # Add a new member function with name and implementation m to the class cls
@@ -217,19 +231,18 @@ def processMemberFunction(executable: str, symtable: AnyDict, j: AnyDict):
              the executable's methods and state. The type is recorded in the
              symtable (by default globals()).
     '''
-    metaclassname = j.get("class_name", None)
+    # TODO: try to load as Clippy function if no metaclassname is defined
+    if 'class_name' not in j:
+        raise ClippyConfigurationError(f"No class_name in {executable}")
+    if 'method_name' not in j:
+        raise ClippyConfigurationError("No method_name in " + executable)
 
-    # \todo try to load as Clippy function if no metaclassname is defined
-    if metaclassname is None:
-        raise ClippyConfigurationError("No class_name in " + executable)
+    metaclassname = j['class_name']
 
-    docstring = j.get("class_desc", None)
+    docstring: Optional[str] = j.get("class_desc")
     args = j.get("args", {})
     selectors = j.get("selectors", [])
-    method = j.get("method_name", None)
-
-    if method is None:
-        raise ClippyConfigurationError("No method_name in " + executable)
+    method = j["method_name"]
 
     # check if metaclass exists already
     if metaclassname in symtable:
