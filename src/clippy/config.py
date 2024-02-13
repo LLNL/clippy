@@ -3,7 +3,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-from clippy import AnyDict
+from clippy.anydict import AnyDict
 
 # command prefix used to specify clippy task management with the HPC cluster
 # for instance, if using slurm this could be set to 'srun -n1 -ppdebug'

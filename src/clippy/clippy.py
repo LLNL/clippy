@@ -9,16 +9,14 @@ import sys
 import types
 import uuid
 import inspect
-from subprocess import run
+from subprocess import run, CompletedProcess
 from clippy.error import ClippyBackendError, ClippyValidationError
 from clippy.regcommand import get_registered_commands
-from clippy import config, AnyDict
+from clippy import config
+from clippy.anydict import AnyDict
 from clippy.serialization import encode_clippy_json, decode_clippy_json
 
-from typing import Callable, List, Optional, Sequence, Tuple, TYPE_CHECKING, Union
-
-if TYPE_CHECKING:
-    from subprocess import CompletedProcess
+from typing import Callable, List, Optional, Sequence, Tuple, Union
 
 
 #  Set this to the clippy executable flag that does validation of stdin.

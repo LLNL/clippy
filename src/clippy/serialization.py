@@ -1,5 +1,6 @@
 from clippy.error import ClippySerializationError
-from clippy import config, AnyDict
+from clippy import config
+from clippy.anydict import AnyDict
 
 from typing import Any, Dict, List, Optional, Tuple
 

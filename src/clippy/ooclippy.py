@@ -13,7 +13,8 @@ import json
 
 # ~ from pprint import pprint
 from subprocess import run, PIPE
-from clippy import config, AnyDict
+from clippy import config
+from clippy.anydict import AnyDict
 from clippy.error import (
     ClippyBackendError,
     ClippyConfigurationError,

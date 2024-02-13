@@ -5,17 +5,16 @@
 
 import pathlib
 import json
+import logging
 import os
 import subprocess
 from clippy.error import ClippyConfigurationError
 from clippy.ooclippy import processMemberFunction
-from clippy import AnyDict
+from clippy.anydict import AnyDict
 
 from typing import Dict, List, Optional, TYPE_CHECKING
 
 
-if TYPE_CHECKING:
-    import logging
 
 CLIPPY_ENV = 'CLIPPY_ENV'
 CLIPPY_CFG = '.clippy'

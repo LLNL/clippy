@@ -8,13 +8,11 @@
 import warnings
 from .clippy import Clippy
 from .clippy import config
+from .anydict import AnyDict
 import inspect
 import importlib.metadata
 
-from typing import Any, Dict
-
 # TODO: SAB 20240206 - replace any instances of AnyDict with more specific types.
-AnyDict = Dict[str, Any]
 
 __version__ = importlib.metadata.version("llnl-clippy")
 
