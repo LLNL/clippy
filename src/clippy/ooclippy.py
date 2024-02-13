@@ -7,12 +7,14 @@
 ##
 
 
+from __future__ import annotations
 import os
 import inspect
 import json
 
 # ~ from pprint import pprint
-from subprocess import run, PIPE
+
+from subprocess import CalledProcessError, run, PIPE
 from clippy import config
 from clippy.anydict import AnyDict
 from clippy.error import (
@@ -20,12 +22,11 @@ from clippy.error import (
     ClippyConfigurationError,
     ClippyValidationError,
     ClippyClassInconsistencyError,
-    ClippyTypeError
+    ClippyTypeError,
 )
 from clippy.serialization import ClippySerializable, encode_clippy_json, decode_clippy_json
 from clippy.expression import Selector
 
-from typing import Dict, List, Optional, Tuple
 
 ##
 # clippy flags
@@ -52,7 +53,7 @@ INT = 'int'
 # new functions
 
 
-def createMetaclass(name: str, docstring: Optional[str]):
+def create_metaclass(name: str, docstring: str | None):
     '''
     Creates a new class name, docstring, and underlying executable.
     '''
@@ -64,7 +65,8 @@ def createMetaclass(name: str, docstring: Optional[str]):
     return cls
 
 
-def checkMetaclassConsistency(cls, name: str, docstring: Optional[str]):
+def check_metaclass_consistency(cls, name: str, docstring: str | None):
+    '''Basic checking to make sure __name__ and __doc__ are set properly'''
     if getattr(cls, "__name__", None) != name:
         raise ClippyClassInconsistencyError()
 
@@ -72,7 +74,7 @@ def checkMetaclassConsistency(cls, name: str, docstring: Optional[str]):
         raise ClippyClassInconsistencyError()
 
 
-def callExecutable(executable: str, dct: AnyDict) -> str:
+def call_executable(executable: str, dct: AnyDict) -> str:
     '''
     converts the dictionary dct into a json file and calls executable cmd
     '''
@@ -80,7 +82,7 @@ def callExecutable(executable: str, dct: AnyDict) -> str:
     # log: print(f"[{executable}]>>>", cmd_stdin)
     cmd_prefix = config.cmd_prefix.split()
 
-    p = run(cmd_prefix + [executable], input=cmd_stdin, stdout=PIPE, encoding='utf-8')
+    p = run(cmd_prefix + [executable], input=cmd_stdin, stdout=PIPE, encoding='utf-8', check=True)
 
     if p.returncode:
         raise ClippyBackendError(p.stderr)
@@ -95,14 +97,14 @@ def callExecutable(executable: str, dct: AnyDict) -> str:
     return output
 
 
-def validateExecutable(executable: str, dct: AnyDict) -> Tuple[bool, str]:
+def validate_executable(executable: str, dct: AnyDict) -> tuple[bool, str]:
     '''
-    converts the dictionary dct into a json file and calls executable cmd
+    Converts the dictionary dct into a json file and calls executable cmd
     '''
 
     cmd_stdin = json.dumps(dct, default=encode_clippy_json)
 
-    p = run([executable, DRY_RUN_FLAG], input=cmd_stdin, stdout=PIPE, encoding='utf-8')
+    p = run([executable, DRY_RUN_FLAG], input=cmd_stdin, stdout=PIPE, encoding='utf-8', check=True)
 
     if p.returncode:
         raise ClippyValidationError(p.stderr)
@@ -117,30 +119,31 @@ def validateExecutable(executable: str, dct: AnyDict) -> Tuple[bool, str]:
     # self.logger.debug(f'Validation returning {ret}')
     return (ret, warn)
 
+
 # OBSOLETE:
 # ~ def processReturnValue(jsonValue):
-    # ~ '''
-    # ~ Tests if jsonValue corresponds to a new object(jsonValue is a dict and contains "_class" and "_state":
-    #    ~ if true then create a new object and set the state
-    #    ~ otherwhise just return the jsonValue
-    # ~ '''
-    # ~ requiresProcessing = isinstance(jsonValue, dict) and CLASS_KEY in jsonValue and STATE_KEY in jsonValue
+# ~ '''
+# ~ Tests if jsonValue corresponds to a new object(jsonValue is a dict and contains "_class" and "_state":
+#    ~ if true then create a new object and set the state
+#    ~ otherwhise just return the jsonValue
+# ~ '''
+# ~ requiresProcessing = isinstance(jsonValue, dict) and CLASS_KEY in jsonValue and STATE_KEY in jsonValue
 
-    # ~ if not requiresProcessing:
-    #     ~ return jsonValue
+# ~ if not requiresProcessing:
+#     ~ return jsonValue
 
-    # TODO: create a new class
-    # clsName = jsonValue[CLASS_KEY]
-    # obj = object.__new__(cls)
-    # setattr(obj, STATE_KEY, jsonValue[STATE_KEY])
-    # return obj
+# TODO: create a new class
+# clsName = jsonValue[CLASS_KEY]
+# obj = object.__new__(cls)
+# setattr(obj, STATE_KEY, jsonValue[STATE_KEY])
+# return obj
 
 
-def defineSelector(cls, name: str):
+def define_selector(cls, name: str):
     setattr(cls, name, Selector(None, name))
 
 
-def defineMethod(cls, name: str, executable: str, arguments: Optional[List[str]]):
+def define_method(cls, name: str, executable: str, arguments: list[str] | None):
     def m(self, *args, **kwargs):
         '''
         Generic Method that calls an executable with specified arguments
@@ -174,10 +177,10 @@ def defineMethod(cls, name: str, executable: str, arguments: Optional[List[str]]
         argdict.update(kwargs)
 
         # validate
-        validateExecutable(executable, argdict)
+        validate_executable(executable, argdict)
 
         # call executable and create json output
-        output = callExecutable(executable, argdict)
+        output = call_executable(executable, argdict)
 
         outj = json.loads(output, object_hook=decode_clippy_json)
 
@@ -187,9 +190,9 @@ def defineMethod(cls, name: str, executable: str, arguments: Optional[List[str]]
         for kw, kwval in kwargs.items():
             if kw in outj:
                 kwval.clear()
-                if isinstance(kwval, Dict):
+                if isinstance(kwval, dict):
                     kwval.update(outj[kw])
-                elif isinstance(kwval, List):
+                elif isinstance(kwval, list):
                     kwval += outj[kw]
                 else:
                     raise ClippyTypeError()
@@ -216,15 +219,16 @@ def defineMethod(cls, name: str, executable: str, arguments: Optional[List[str]]
 
 # obsolete
 # ~ def defineAPI(cls, apidesc, statedesc):
-    # ~ '''
-    # ~ Adds methods to cls according to the description in apidesc
-    # ~ '''
+# ~ '''
+# ~ Adds methods to cls according to the description in apidesc
+# ~ '''
 
-    # ~ for el in apidesc:
-    #       ~ defineMethod(cls, el["method"], el["args"], statedesc)
-    #       ~ print('+ ' + el["method_name"])
+# ~ for el in apidesc:
+#       ~ defineMethod(cls, el["method"], el["args"], statedesc)
+#       ~ print('+ ' + el["method_name"])
 
-def processMemberFunction(executable: str, symtable: AnyDict, j: AnyDict):
+
+def process_member_function(executable: str, symtable: AnyDict, j: AnyDict):
     '''
     Creates a class representing the executable, and stores the created class in symtable.
     details: The executable is queried for its description. The returned
@@ -240,7 +244,7 @@ def processMemberFunction(executable: str, symtable: AnyDict, j: AnyDict):
 
     metaclassname = j['class_name']
 
-    docstring: Optional[str] = j.get("class_desc")
+    docstring: str | None = j.get("class_desc")
     args = j.get("args", {})
     selectors = j.get("selectors", [])
     method = j["method_name"]
@@ -249,21 +253,21 @@ def processMemberFunction(executable: str, symtable: AnyDict, j: AnyDict):
     if metaclassname in symtable:
         # reuse existing class
         metaclass = symtable[metaclassname]
-        checkMetaclassConsistency(metaclass, metaclassname, docstring)
+        check_metaclass_consistency(metaclass, metaclassname, docstring)
     else:
         # create a new metaclass
-        metaclass = createMetaclass(metaclassname, docstring)
+        metaclass = create_metaclass(metaclassname, docstring)
         symtable[metaclassname] = metaclass
 
     # add the methods
-    defineMethod(metaclass, method, executable, args)
+    define_method(metaclass, method, executable, args)
     # add the selectors
     for selector in selectors:
-        defineSelector(metaclass, selector)
+        define_selector(metaclass, selector)
     return metaclass
 
 
-def processExecutable(executable: str, symtable: AnyDict):
+def process_executable(executable: str, symtable: AnyDict):
     '''
     Creates a class representing the executable, and stores the created class in symtable.
     details: The executable is queried for its description. The returned
@@ -274,17 +278,18 @@ def processExecutable(executable: str, symtable: AnyDict):
 
     cmd = [executable, JSON_FLAG]
     # open file, will be received through std out
-    exe = run(cmd, stdout=PIPE)
+    try:
+        exe = run(cmd, stdout=PIPE, check=True)
 
-    if exe.returncode:
-        raise ClippyConfigurationError("Execution error " + str(exe.returncode))
+    except CalledProcessError as e:
+        raise ClippyConfigurationError("Execution error " + e.stderr) from e
 
     j = json.loads(exe.stdout)
 
-    return processMemberFunction(executable, symtable, j)
+    return process_member_function(executable, symtable, j)
 
 
-def processDirectory(directory: str, recurse_directories: bool = False, symtable: Optional[AnyDict] = None):
+def process_directory(directory: str, recurse_directories: bool = False, symtable: AnyDict | None = None):
     '''
     Processes all executables in a directory.
     '''
@@ -300,9 +305,9 @@ def processDirectory(directory: str, recurse_directories: bool = False, symtable
         if os.access(el, os.X_OK):
             str_el = os.fsdecode(el)
             if el.is_file():
-                processExecutable(str_el, symtable)
+                process_executable(str_el, symtable)
             elif recurse_directories and el.is_dir():
-                processDirectory(str_el, True, symtable)
+                process_directory(str_el, True, symtable)
             else:
                 pass
 
@@ -311,21 +316,21 @@ def processDirectory(directory: str, recurse_directories: bool = False, symtable
 # main (simple tester)
 
 # ~ if __name__ == "__main__":
-    # ~ processDirectory("./bin/howdy")
+# ~ processDirectory("./bin/howdy")
 
-    # ~ # create default greeter
-    # ~ g = Greeter()
-    # ~ print(g.greet())
+# ~ # create default greeter
+# ~ g = Greeter()
+# ~ print(g.greet())
 
-    # ~ # create a new greeter
-    # ~ g = Greeter("Howdy", name = "Texas")
-    # ~ print(g.greet())
+# ~ # create a new greeter
+# ~ g = Greeter("Howdy", name = "Texas")
+# ~ print(g.greet())
 
-    # ~ # reset state
-    # ~ g.setGreeting("Hello")
-    # ~ g.setGreeted("Dude")
-    # ~ print(g.greet())
+# ~ # reset state
+# ~ g.setGreeting("Hello")
+# ~ g.setGreeted("Dude")
+# ~ print(g.greet())
 
-    # ~ pprint(g)
-    # ~ pprint(Greeter)
-    # ~ sys.exit(0)
+# ~ pprint(g)
+# ~ pprint(Greeter)
+# ~ sys.exit(0)

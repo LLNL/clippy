@@ -5,12 +5,12 @@
 
 # TODO: SAB 20240204 finish typing
 
+import inspect
+import importlib.metadata
 import warnings
 from .clippy import Clippy
 from .clippy import config
 from .anydict import AnyDict
-import inspect
-import importlib.metadata
 
 # TODO: SAB 20240206 - replace any instances of AnyDict with more specific types.
 

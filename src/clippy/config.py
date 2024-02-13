@@ -3,6 +3,8 @@
 #
 # SPDX-License-Identifier: MIT
 
+""" The clippy configuration file. To be edited by users. """
+
 from clippy.anydict import AnyDict
 
 # command prefix used to specify clippy task management with the HPC cluster

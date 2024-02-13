@@ -1,3 +1,10 @@
+# Copyright 2020 Lawrence Livermore National Security, LLC and other CLIPPy Project Developers.
+# See the top-level COPYRIGHT file for details.
+#
+# SPDX-License-Identifier: MIT
+
+""" Holds the expression building code. """
+
 from clippy.serialization import ClippySerializable
 
 
@@ -8,7 +15,7 @@ class Expression(ClippySerializable):
         self.o1 = o1
         self.o2 = o2
 
-    def _express(self, op, o, **kwargs):
+    def _express(self, op, o):
         return Expression(op, self, o)
 
     def __lt__(self, o):
@@ -53,8 +60,8 @@ class Expression(ClippySerializable):
     def __divmod__(self, o):
         return self._express("divmod", o)
 
-    def __pow__(self, o, modulo=None):
-        return self._express("**", o, modulo=modulo)
+    def __pow__(self, o):
+        return self._express("**", o)
 
     def __lshift__(self, o):
         return self._express("<<", o)
@@ -83,7 +90,8 @@ class Expression(ClippySerializable):
     def contains(self, o, regex=False):
         oper = "in" if not regex else "regex"
         return Expression(oper, o, self)
-#        return self._express(oper, o)
+
+    #        return self._express(oper, o)
 
     # string and array concatenation
     def cat(self, o):
@@ -113,12 +121,12 @@ class Field(Expression):
         self.name = name
 
     # ~ def to_json(self):
-        # ~ return f"{{\"var\": [\"{self.name}\"]}}"
+    # ~ return f"{{\"var\": [\"{self.name}\"]}}"
 
     def to_serial(self):
         return {"var": self.name}
 
-    def _express(self, op, o, **kwargs):
+    def _express(self, op, o):
         return Expression(op, self, o)
 
 
@@ -127,7 +135,7 @@ class Selector:
         # not used at the moment but could be potentially used
         # to get parent state information that can inform the
         # field/expression creation
-        # self.parent = parent
+        self.parent = parent
         self._fld_name_sel_08 = name
 
     def __getattr__(self, key):

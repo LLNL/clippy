@@ -1,13 +1,14 @@
+from __future__ import annotations
+from typing import Any
 from clippy.error import ClippySerializationError
 from clippy import config
 from clippy.anydict import AnyDict
 
-from typing import Any, Dict, List, Optional, Tuple
-
 
 # TODO: SAB 20240204 complete typing here.
 
-class ClippySerializable():
+
+class ClippySerializable:
     """
     Declares the interface for serializing clippy objects. Subclass should inherit from this class to
     be serializable as part of the clippy frontend/backend communication infrustructure.
@@ -35,12 +36,13 @@ class ClippySerializable():
         Subclasses should override this method to provide a custom serialization of the object instance.
         This method should return a python-primitive (dict, list, str, etc) version of the instance state
         """
-        return {"__clippy_type__": {
+        return {
+            "__clippy_type__": {
                 "__module__": self.__class__.__module__,
                 "__class__": self.__class__.__name__,
-                "state": self._state
-                }
-                }
+                "state": self._state,
+            }
+        }
 
     @classmethod
     def from_serial(cls, o: AnyDict):
@@ -53,7 +55,7 @@ class ClippySerializable():
             raise ClippySerializationError("No clippy type detected")
 
         clippy_type = o["__clippy_type__"]
-        assert isinstance(clippy_type, Dict)
+        assert isinstance(clippy_type, dict)
         # right now we aren't using the module but  probably should
         # type_module = clippy_type.get("__module__", None)
         type_name = clippy_type.get("__class__", None)
@@ -85,13 +87,13 @@ class ClippySerializable():
         return instance
 
 
-def _form_method_arguments(method_args: Optional[AnyDict]) -> Tuple[List[Any], AnyDict]:
+def _form_method_arguments(method_args: AnyDict | None) -> tuple[list[Any], AnyDict]:
     if method_args is None:
         return [], {}
 
-    sorted_method_args = sorted([(method_args[arg_name]["position"],
-                                arg_name,
-                                method_args[arg_name]["arg_value"]) for arg_name in method_args])
+    sorted_method_args = sorted(
+        [(method_args[arg_name]["position"], arg_name, method_args[arg_name]["arg_value"]) for arg_name in method_args]
+    )
     keyword_args = {arg[1]: arg[2] for arg in sorted_method_args if arg[0] == -1}
     positionals = [arg[2] for arg in sorted_method_args if arg[0] > -1]
     return (positionals, keyword_args)

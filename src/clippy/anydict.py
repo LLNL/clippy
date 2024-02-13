@@ -2,7 +2,11 @@
 # See the top-level COPYRIGHT file for details.
 #
 # SPDX-License-Identifier: MIT
+"""
+Defines the AnyDict type that will be used to identify
+further typing optimizations.
+"""
 
-from typing import Any, Dict
+from typing import Any
 
-AnyDict = Dict[str, Any]
+AnyDict = dict[str, Any]
