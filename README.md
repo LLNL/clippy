@@ -24,7 +24,7 @@ complex HPC behavior and arcane job submission commands.
 
 ## Installation of Python Code
 ```console
-$ python setup.py install
+$ pip install .
 ```
 
 ## Building C++ Examples on LC

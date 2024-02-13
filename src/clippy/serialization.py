@@ -1,7 +1,7 @@
 from clippy.error import ClippySerializationError
 from clippy import config, AnyDict
 
-from typing import Any, Dict, List, Optional, Self, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 
 # TODO: SAB 20240204 complete typing here.
@@ -42,7 +42,7 @@ class ClippySerializable():
                 }
 
     @classmethod
-    def from_serial(cls, o: AnyDict) -> Self:
+    def from_serial(cls, o: AnyDict):
         """
         Subclasses should override this method to provide a custom deserialization from the python-primative data.
         This method should return a fully constructed object instance.

@@ -6,13 +6,17 @@
 # TODO: SAB 20240204 finish typing
 
 import warnings
-from clippy.clippy import Clippy
+from .clippy import Clippy
+from .clippy import config
 import inspect
+import importlib.metadata
 
 from typing import Any, Dict
 
 # TODO: SAB 20240206 - replace any instances of AnyDict with more specific types.
 AnyDict = Dict[str, Any]
+
+__version__ = importlib.metadata.version("llnl-clippy")
 
 
 class ClippyRebindWarning(UserWarning):
@@ -76,3 +80,11 @@ def _bind_to_local_environment(caller_locals: AnyDict, src_obj, src_name: str):
         warnings.warn(f"{src_name} already exists in local environment, skipping rebind...", ClippyRebindWarning)
         return
     caller_locals[src_name] = getattr(src_obj, src_name)
+
+
+__all__ = [
+    'Clippy',
+    'config',
+    'clippy_import',
+    '__version__',
+]

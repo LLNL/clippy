@@ -34,7 +34,10 @@ def _is_exe(f: pathlib.Path):
     return '7' in s
 
 
-def get_registered_commands(logger: logging.Logger, cmd_dict: Optional[Dict[str, pathlib.Path]] = None) -> Dict[str, AnyDict]:
+def get_registered_commands(
+    logger: logging.Logger,
+    cmd_dict: Optional[Dict[str, pathlib.Path]] = None
+) -> Dict[str, AnyDict]:
     '''
     Returns a dictionary of namespaces with keys of str (representing the namespace)
     and values of dict, with keys of method names, and vals of dicts representing
