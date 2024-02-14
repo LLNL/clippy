@@ -14,7 +14,10 @@ from .anydict import AnyDict
 
 # TODO: SAB 20240206 - replace any instances of AnyDict with more specific types.
 
-__version__ = importlib.metadata.version("llnl-clippy")
+try:
+    __version__ = importlib.metadata.version("llnl-clippy")
+except importlib.metadata.PackageNotFoundError:
+    __version__ = 'unknown'
 
 
 class ClippyRebindWarning(UserWarning):
