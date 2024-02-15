@@ -4,46 +4,20 @@
 # SPDX-License-Identifier: MIT
 
 from __future__ import annotations
-import json
 import logging
 import sys
 import types
 import uuid
 import inspect
-from subprocess import run, CompletedProcess
-from collections.abc import Callable, Sequence
-from clippy.error import ClippyBackendError, ClippyValidationError
+from collections.abc import Callable
+from clippy.error import ClippyBackendError
 from clippy.regcommand import get_registered_commands
 from clippy import config
 from clippy.anydict import AnyDict
-from clippy.serialization import encode_clippy_json, decode_clippy_json
+from clippy.execution import _validate, _run
 
 
 #  Set this to the clippy executable flag that does validation of stdin.
-DRY_RUN_FLAG: str = '--clippy-validate'
-
-
-def _exec(execcmd: str | Sequence[str], submission_dict: AnyDict, logger: logging.Logger) -> CompletedProcess:
-    '''
-    Internal function.
-
-    Executes the command specified with `execcmd` and
-    passes `submission_dict` as JSON via STDIN.
-
-    Logs debug messages with progress.
-    Returns the process result object.
-
-    This function is used by _run and _validate.
-    '''
-
-    logger.debug(f'Submission = {submission_dict}')
-    # PP support passing objects
-    # ~ cmd_stdin = json.dumps(submission_dict)
-    cmd_stdin = json.dumps(submission_dict, default=encode_clippy_json)
-    logger.debug(f'Calling {execcmd} with input {cmd_stdin}')
-    p = run(execcmd, input=cmd_stdin, capture_output=True, encoding='utf-8', check=False)
-    logger.debug(f'run(): result = {p}')
-    return p
 
 
 class Command:
@@ -93,11 +67,11 @@ class Command:
                     else:
                         kwargs[posarg_name] = arg
 
-            (valid, warnings) = capself.session._validate(capself.exe_name, kwargs)
+            (valid, warnings) = capself.session._validate_executable(capself.exe_name, kwargs)
             # if validate doesn't throw an error, we either have True (successful validation) or False
             # (warnings).
             if valid:  # no validation errors or warnings
-                return capself.session._run(capself.exe_name, kwargs)
+                return capself.session._call_executable(capself.exe_name, kwargs)
 
             self.logger.warn(f'Validation returned warning: {warnings}; aborting execution')
             return {}
@@ -247,53 +221,26 @@ class Clippy:
     def logo(self):
         logo()
 
-    def _validate(self, cmd: str, submission_dict: AnyDict) -> tuple[bool, str]:
+    def _validate_executable(self, executable: str, submission_dict: AnyDict) -> tuple[bool, str | None]:
         '''
         Internal command.
 
         Runs the command in dry-run mode only, to validate input.
         Returns True or False if there are warnings (no errors),
         along with any stderr messageas.
-        Will throw a ValidationError if there are errors.
-        Calls _exec.
+        Calls _exec_and_parse.
         '''
-        self.logger.debug('Validating %s', cmd)
-        validate_cmd_prefix = config.validate_cmd_prefix.split()
-        p = _exec(validate_cmd_prefix + [cmd, DRY_RUN_FLAG], submission_dict, self.logger)
-        if p.returncode:
-            raise ClippyValidationError(p.stderr)
+        return _validate(executable, submission_dict, self.logger)
 
-        warn = ''
-        ret = True
-        if p.stderr:
-            self.logger.warning('Received %s', p.stderr)
-            ret = False
-            warn = p.stderr
-        self.logger.debug('Validation returning %s', ret)
-        return (ret, warn)
-
-    def _run(self, cmd: str, submission_dict: AnyDict) -> AnyDict:
+    def _call_executable(self, executable: str, submission_dict: AnyDict) -> AnyDict:
         '''
         Processes a submission locally (no remote server).
-        Returns a Python dictionary of results, or throws
-        a ClippyBackendError if the backend process abended.
-        Calls _exec.
+        Returns a Python dictionary of results.
+        Calls _run.
         '''
 
-        cmd_prefix = config.cmd_prefix.split()
-        self.logger.debug('Running %s', cmd_prefix + [cmd])
-        p = _exec(cmd_prefix + [cmd], submission_dict, self.logger)
-        if p.returncode:
-            raise ClippyBackendError(p.stderr)
-        self.logger.debug('Received stdout: %s', p.stdout)
-        if p.stderr:
-            self.logger.warning('Received stderr: %s', p.stderr)
-
-        # if we have no output, we still need SOMETHING to feed json.loads, so let's set it to a scalar 'null'.
-        output = 'null' if not p.stdout else p.stdout
-        # PP: enable functions to return known objects
-        # was: return json.loads(output)
-        return json.loads(output, object_hook=decode_clippy_json)
+        self.logger.debug('Running %s', executable)
+        return _run(executable, submission_dict, self.logger)
 
 
 def logo():

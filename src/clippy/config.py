@@ -7,6 +7,12 @@
 
 from clippy.anydict import AnyDict
 
+# flag for specifying a dry run to the backend
+DRY_RUN_FLAG: str = '--clippy-validate'
+
+# key to json entry that holds return data from backend functions.
+returns_key: str = 'returns'
+
 # command prefix used to specify clippy task management with the HPC cluster
 # for instance, if using slurm this could be set to 'srun -n1 -ppdebug'
 cmd_prefix: str = ''

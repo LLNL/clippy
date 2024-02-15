@@ -8,9 +8,9 @@
 import inspect
 import importlib.metadata
 import warnings
-from .clippy import Clippy
-from .clippy import config
-from .anydict import AnyDict
+from clippy.clippy import Clippy
+from clippy.clippy import config
+from clippy.anydict import AnyDict
 
 # TODO: SAB 20240206 - replace any instances of AnyDict with more specific types.
 

@@ -11,6 +11,7 @@ from __future__ import annotations
 import os
 import inspect
 import json
+import logging
 
 # ~ from pprint import pprint
 
@@ -18,14 +19,14 @@ from subprocess import CalledProcessError, run, PIPE
 from clippy import config
 from clippy.anydict import AnyDict
 from clippy.error import (
-    ClippyBackendError,
     ClippyConfigurationError,
     ClippyValidationError,
     ClippyClassInconsistencyError,
     ClippyTypeError,
 )
-from clippy.serialization import ClippySerializable, encode_clippy_json, decode_clippy_json
+from clippy.serialization import ClippySerializable
 from clippy.expression import Selector
+from clippy.execution import _validate, _run
 
 
 ##
@@ -74,50 +75,19 @@ def check_metaclass_consistency(cls, name: str, docstring: str | None):
         raise ClippyClassInconsistencyError()
 
 
-def call_executable(executable: str, dct: AnyDict) -> str:
+def call_executable(executable: str, dct: AnyDict, logger: logging.Logger) -> AnyDict:
     '''
     converts the dictionary dct into a json file and calls executable cmd
     '''
-    cmd_stdin = json.dumps(dct, default=encode_clippy_json)
-    # log: print(f"[{executable}]>>>", cmd_stdin)
-    cmd_prefix = config.cmd_prefix.split()
 
-    p = run(cmd_prefix + [executable], input=cmd_stdin, stdout=PIPE, encoding='utf-8', check=True)
-
-    if p.returncode:
-        raise ClippyBackendError(p.stderr)
-
-    # self.logger.debug(f'Received stdout: {p.stdout}')
-    # if p.stderr:
-    #    self.logger.warn(f'Received stderr: {p.stderr}')
-
-    # if we have no output, we still need SOMETHING to feed json.loads, so let's set it to a scalar 'null'.
-    output = 'null' if not p.stdout else p.stdout
-    # log: print(f"[{executable}]<<<", output)
-    return output
+    return _run(executable, dct, logger)
 
 
-def validate_executable(executable: str, dct: AnyDict) -> tuple[bool, str]:
+def validate_executable(executable: str, dct: AnyDict, logger: logging.Logger) -> tuple[bool, str]:
     '''
     Converts the dictionary dct into a json file and calls executable cmd
     '''
-
-    cmd_stdin = json.dumps(dct, default=encode_clippy_json)
-
-    p = run([executable, DRY_RUN_FLAG], input=cmd_stdin, stdout=PIPE, encoding='utf-8', check=True)
-
-    if p.returncode:
-        raise ClippyValidationError(p.stderr)
-
-    warn = ''
-    ret = True
-    if p.stderr:
-        # self.logger.warn(f'Received {p.stderr}')
-        ret = False
-        warn = p.stderr
-
-    # self.logger.debug(f'Validation returning {ret}')
-    return (ret, warn)
+    return _validate(executable, dct, logger)
 
 
 # OBSOLETE:
@@ -177,12 +147,12 @@ def define_method(cls, name: str, executable: str, arguments: list[str] | None):
         argdict.update(kwargs)
 
         # validate
-        validate_executable(executable, argdict)
+        valid, stderr = validate_executable(executable, argdict, self.logger)
+        if not valid:
+            raise ClippyValidationError(stderr)
 
         # call executable and create json output
-        output = call_executable(executable, argdict)
-
-        outj = json.loads(output, object_hook=decode_clippy_json)
+        outj, stderr = call_executable(executable, argdict, self.logger)
 
         # if we have results that have keys that are in our
         # kwargs, let's update the kwarg references. Works
@@ -209,7 +179,7 @@ def define_method(cls, name: str, executable: str, arguments: list[str] | None):
             #    ~ setattr(self, key, statej[key])
 
         # return result
-        return outj.get("returns")
+        return outj.get(config.returns_key)
 
         # end of nested def m
 

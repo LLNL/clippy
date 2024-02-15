@@ -107,11 +107,11 @@ disable=
     fixme,
     cyclic-import,
     import-error,
-	E501,
-	E231,
-	C0301,
-	W0212,
-	C0116
+	# E501,
+	# E231,
+	# C0301,
+	# W0212,
+	# C0116
 
 
 [REPORTS]
@@ -523,7 +523,7 @@ preferred-modules=
 
 # Exceptions that will emit a warning when being caught. Defaults to
 # "Exception"
-overgeneral-exceptions=Exception
+overgeneral-exceptions=builtins.Exception
 
 
 [TYPING]
