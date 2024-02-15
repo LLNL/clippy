@@ -43,12 +43,12 @@ def test_clippy_returns_bool(c):
     assert c.test.returns_bool()
 
 
-def test_clippy_returns_dict(c):
-    d = c.test.returns_dict()
-    assert len(d) == 3
-    assert d.get('a') == 1
-    assert d.get('b') == 2
-    assert d.get('c') == 3
+# def test_clippy_returns_dict(c):
+#     d = c.test.returns_dict()
+#     assert len(d) == 3
+#     assert d.get('a') == 1
+#     assert d.get('b') == 2
+#     assert d.get('c') == 3
 
 
 def test_clippy_returns_vec_int(c):

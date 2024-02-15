@@ -6,3 +6,4 @@ build
 setup.cfg
 .vscode
 *.egg-info
+.coverage
