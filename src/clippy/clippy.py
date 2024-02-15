@@ -10,7 +10,7 @@ import types
 import uuid
 import inspect
 from collections.abc import Callable
-from clippy.error import ClippyBackendError
+from clippy.error import ClippyBackendError, ClippyTypeError
 from clippy.regcommand import get_registered_commands
 from clippy import config
 from clippy.anydict import AnyDict
@@ -60,10 +60,13 @@ class Command:
                 else:
                     posarg_name = capself.positionals[i]
                     if posarg_name in kwargs:  # we don't override dictionary with positionals.
-                        self.logger.warn(
-                            f'Positional argument "{arg}" conflicts with dictionary argument \
-{posarg_name} "{kwargs[posarg_name]}"; ignoring.'
+                        self.logger.warning(
+                            'Positional argument "%s" conflicts with dictionary argument %s "%s"; ignoring.',
+                            arg,
+                            posarg_name,
+                            kwargs[posarg_name],
                         )
+
                     else:
                         kwargs[posarg_name] = arg
 
@@ -71,7 +74,20 @@ class Command:
             # if validate doesn't throw an error, we either have True (successful validation) or False
             # (warnings).
             if valid:  # no validation errors or warnings
-                return capself.session._call_executable(capself.exe_name, kwargs)
+                results = capself.session._call_executable(capself.exe_name, kwargs)
+                references = results.get(config.reference_key, {})
+                for kw, kwval in kwargs.items():
+                    self.logger.debug('testing %s for overwrite against %s', kw, list(results.keys()))
+                    if kw in references:
+                        self.logger.debug('overwriting %s', kw)
+                        kwval.clear()
+                        if isinstance(kwval, dict):
+                            kwval.update(references[kw])
+                        elif isinstance(kwval, list):
+                            kwval += references[kw]
+                        else:
+                            raise ClippyTypeError()
+                return results.get(config.return_key, {})
 
             self.logger.warn(f'Validation returned warning: {warnings}; aborting execution')
             return {}
@@ -240,7 +256,7 @@ class Clippy:
         '''
 
         self.logger.debug('Running %s', executable)
-        return _run(executable, submission_dict, self.logger).get(config.returns_key, {})
+        return _run(executable, submission_dict, self.logger)
 
 
 def logo():

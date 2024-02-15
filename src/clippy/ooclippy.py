@@ -80,12 +80,12 @@ def call_executable(executable: str, dct: AnyDict, logger: logging.Logger) -> An
     converts the dictionary dct into a json file and calls executable cmd
     '''
 
-    return _run(executable, dct, logger).get(config.returns_key, {})
+    return _run(executable, dct, logger)
 
 
 def validate_executable(executable: str, dct: AnyDict, logger: logging.Logger) -> tuple[bool, str]:
     '''
-    Converts the dictionary dct into a json file and calls executable cmd
+    Converts the dictionary dct into a json file and validates executable cmd
     '''
     return _validate(executable, dct, logger)
 
@@ -158,7 +158,7 @@ def define_method(cls, name: str, executable: str, arguments: list[str] | None):
         # kwargs, let's update the kwarg references. Works
         # for lists and dicts only.
         for kw, kwval in kwargs.items():
-            if kw in outj:
+            if kw in outj.get(config.reference_key, {}):
                 kwval.clear()
                 if isinstance(kwval, dict):
                     kwval.update(outj[kw])
