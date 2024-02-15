@@ -80,7 +80,7 @@ def call_executable(executable: str, dct: AnyDict, logger: logging.Logger) -> An
     converts the dictionary dct into a json file and calls executable cmd
     '''
 
-    return _run(executable, dct, logger)
+    return _run(executable, dct, logger).get(config.returns_key, {})
 
 
 def validate_executable(executable: str, dct: AnyDict, logger: logging.Logger) -> tuple[bool, str]:

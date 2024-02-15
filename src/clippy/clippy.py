@@ -240,7 +240,7 @@ class Clippy:
         '''
 
         self.logger.debug('Running %s', executable)
-        return _run(executable, submission_dict, self.logger)
+        return _run(executable, submission_dict, self.logger).get(config.returns_key, {})
 
 
 def logo():

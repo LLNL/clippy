@@ -53,3 +53,8 @@ def test_clippy_returns_bool(c):
 
 def test_clippy_returns_vec_int(c):
     assert c.test.returns_vec_int() == [0, 1, 2, 3, 4, 5]
+
+
+def test_clippy_returns_optional_string(c):
+    assert c.test.call_with_optional_string() == 'Howdy, World'
+    assert c.test.call_with_optional_string(name='Seth') == 'Howdy, Seth'
