@@ -155,7 +155,7 @@ def define_method(cls, name: str, executable: str, arguments: list[str] | None):
             raise ClippyValidationError(stderr)
 
         # call executable and create json output
-        outj, stderr = call_executable(executable, argdict, self.logger)
+        outj = call_executable(executable, argdict, self.logger)
 
         # if we have results that have keys that are in our
         # kwargs, let's update the kwarg references. Works
@@ -182,7 +182,7 @@ def define_method(cls, name: str, executable: str, arguments: list[str] | None):
             #    ~ setattr(self, key, statej[key])
 
         # return result
-        return outj.get(config.returns_key)
+        return outj.get(config.return_key)
 
         # end of nested def m
 
