@@ -63,6 +63,9 @@ def create_metaclass(name: str, docstring: str | None):
     # ~ setattr(cls, STATE_KEY, {}) -- set by ClippySerializable
 
     config._dynamic_types[name] = cls  # should this be set by ClippySerializable?
+    logger = logging.Logger(name)
+    logger.setLevel(config.loglevel)
+    setattr(cls, "logger", logger)
     return cls
 
 
