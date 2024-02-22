@@ -27,6 +27,7 @@ from clippy.error import (
 from clippy.serialization import ClippySerializable
 from clippy.expression import Selector
 from clippy.execution import _validate, _run
+from clippy.version import _check_version
 
 
 ##
@@ -211,9 +212,12 @@ def process_member_function(executable: str, symtable: AnyDict, j: AnyDict):
     '''
     # TODO: try to load as Clippy function if no metaclassname is defined
     if 'class_name' not in j:
-        raise ClippyConfigurationError(f"No class_name in {executable}")
+        raise ClippyConfigurationError("No class_name in " + executable)
     if 'method_name' not in j:
         raise ClippyConfigurationError("No method_name in " + executable)
+    # check version
+    if not _check_version(j):
+        raise ClippyConfigurationError("Invalid version information in " + executable)
 
     metaclassname = j['class_name']
 

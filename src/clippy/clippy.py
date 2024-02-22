@@ -229,7 +229,7 @@ class Clippy:
                     setattr(inner, name, types.MethodType(cmd.genfn(cmd.docstring), self))
                     inner.methods.append(name)  # type: ignore
                 else:
-                    print(f'{name} is a class')  # TODO: is this a debug statement?
+                    self.logger.debug('%s is a class', name)
                     setattr(inner, name, jsondict)
                     inner.classes.append(name)  # type: ignore
             setattr(self, namespace, inner)
@@ -253,6 +253,8 @@ class Clippy:
         Processes a submission locally (no remote server).
         Returns a Python dictionary of results.
         Calls _run.
+
+        Assumes valid input.
         '''
 
         self.logger.debug('Running %s', executable)

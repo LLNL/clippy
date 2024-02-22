@@ -14,6 +14,7 @@ import subprocess
 from clippy.error import ClippyConfigurationError
 from clippy.ooclippy import process_member_function
 from clippy.anydict import AnyDict
+from clippy.version import _check_version
 
 
 CLIPPY_ENV = 'CLIPPY_ENV'
@@ -62,15 +63,20 @@ def get_registered_commands(
                     exe = subprocess.run(cmd, capture_output=True, check=True)
                     try:
                         j = json.loads(exe.stdout)
-                        ns = namespaces[namespace]
-                        # test if this is a member function and defer to
-                        # ooclippy if needed
-                        if j.get('class_name', None) is not None:
-                            process_member_function(fstr, ns, j)
+                        if not _check_version(j):
+                            logger.warning('%s has an invalid or missing version - ignoring', fstr)
                         else:
-                            j['exe_name'] = fstr
-                            ns[j['method_name']] = j
-                            logger.debug('Adding %s to valid commands under namespace %s', fstr, namespace)
+                            ns = namespaces[namespace]
+                            # print(f'adding {fstr} at version {j['version']} to namespace {ns}')
+                            logger.debug('adding %s at version %s to namespace %s', fstr, j['version'], ns)
+                            # test if this is a member function and defer to
+                            # ooclippy if needed
+                            if 'class_name' in j:
+                                process_member_function(fstr, ns, j)
+                            else:
+                                j['exe_name'] = fstr
+                                ns[j['method_name']] = j
+                                logger.debug('Adding %s to valid commands under namespace %s', fstr, namespace)
                     except json.JSONDecodeError:
                         logger.warning('JSON parsing error for %s - ignoring', fstr)
 

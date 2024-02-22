@@ -7,6 +7,9 @@
 
 from clippy.anydict import AnyDict
 
+# semver version restrictions for the backend
+REQUIRED_BACKEND: str = '>=0.2.0, <0.3.0'
+
 # flag for specifying a dry run to the backend
 DRY_RUN_FLAG: str = '--clippy-validate'
 
