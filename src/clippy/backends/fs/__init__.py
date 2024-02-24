@@ -8,42 +8,45 @@ import sys
 import pathlib
 import logging
 from subprocess import CalledProcessError
+from typing import Any
 
 
-from .serialization import ClippySerializable
-from ..anydict import AnyDict
-from ..error import ClippyConfigurationError, ClippyTypeError, ClippyValidationError
-from .. import config
+from . import config
+from ..version import _check_version
+from ..execution import _validate, _run
+from ..serialization import ClippySerializable
 
-from .version import _check_version
-from .execution import _validate, _run
-from ..constants import JSON_FLAG, CLASS_META_FILE, STATE_KEY
+from ... import config as topconfig
+from ...constants import JSON_FLAG, CLASS_META_FILE, STATE_KEY
+from ...error import ClippyConfigurationError, ClippyTypeError, ClippyValidationError
 
 PATH = sys.path[0]
 logger = logging.Logger('init')
 logger.setLevel(logging.DEBUG)
 
-symtable: AnyDict = {}
 
-# CLIPPY_BACKEND_PATH = ['/home/seth/dev/cpp/clippycpp/build/test']
-CLIPPY_BACKEND_PATH = [x.strip() for x in os.environ.get('CLIPPY_BACKEND_PATH', '').split(',')]
-
-
-def _load_classes(paths: list[str]):
+def classes() -> dict[str, Any]:
+    paths = config.CLIPPY_FS_BACKEND_PATHS
+    _classes = {}
     # print(f'{paths=}')
     for path in paths:
-        classes = os.scandir(path)
+        files = os.scandir(path)
         # print(f'  {classes=}')
-        for c in classes:
-            p = pathlib.Path(path, c)
+        for f in files:
+            if f.name in config.CLIPPY_FS_EXCLUDE_PATHS:
+                continue
+            p = pathlib.Path(path, f)
             # print(f'    {p=}, {os.path.isdir(p)=}')
             if os.path.isdir(p):
-                _cls = _create_class(c.name, path)
-                globals()[c.name] = _cls
+                print(f'appending class at {p=}')
+                _cls = _create_class(f.name, path)
+                _classes[f.name] = _cls
     # cmds = get_registered_commands(logger, {'foo': pathlib.Path(origin, name)})
     # type(name, (), cmds)
+    return _classes
 
 
+# All backends must have a "classes" function that returns a class that can be added to Clippy.
 def _create_class(name: str, path: str):
     print(f'creating class {name=}, {path=}')
     metafile = pathlib.Path(path, name, CLASS_META_FILE)
@@ -152,7 +155,7 @@ def _define_method(cls, name: str, executable: str, docstr: str, arguments: list
         # kwargs, let's update the kwarg references. Works
         # for lists and dicts only.
         for kw, kwval in kwargs.items():
-            if kw in outj.get(config.reference_key, {}):
+            if kw in outj.get(topconfig.reference_key, {}):
                 kwval.clear()
                 if isinstance(kwval, dict):
                     kwval.update(outj[kw])
@@ -173,7 +176,9 @@ def _define_method(cls, name: str, executable: str, docstr: str, arguments: list
             #    ~ setattr(self, key, statej[key])
 
         # return result
-        return outj.get(config.return_key)
+        if outj.get('returns_self', False):
+            return self
+        return outj.get(topconfig.return_key)
 
         # end of nested def m
 
@@ -181,6 +186,3 @@ def _define_method(cls, name: str, executable: str, docstr: str, arguments: list
     # setattr(name, '__doc__', docstr)
     m.__doc__ = docstr
     setattr(cls, name, m)
-
-
-_load_classes(CLIPPY_BACKEND_PATH)

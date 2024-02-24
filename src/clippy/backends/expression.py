@@ -79,7 +79,9 @@ class Expression(ClippySerializable):
         return self._express("or", o)
 
     def __contains__(self, o):
-        raise NotImplementedError("syntax a in b is not supported. Use b.contains(a) instead.")
+        raise NotImplementedError(
+            "syntax a in b is not supported. Use b.contains(a) instead."
+        )
         # will not work when written as "x in set",
         #   b/c the in-operator always converts the result to bool
         #   https://stackoverflow.com/questions/38542543/functionality-of-python-in-vs-contains

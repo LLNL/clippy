@@ -6,6 +6,10 @@
 """ The clippy configuration file. To be edited by users. """
 
 from .anydict import AnyDict
+from .backends import fs
+
+# backends to use for Clippy.
+CLIPPY_BACKENDS = [fs]
 
 # semver version restrictions for the backend
 REQUIRED_BACKEND: str = '>=0.2.0, <0.3.0'

@@ -13,7 +13,9 @@ from ..error import ClippyValidationError, ClippyBackendError
 from .serialization import encode_clippy_json, decode_clippy_json
 
 
-def _exec(cmd: list[str], submission_dict: AnyDict, logger: logging.Logger, validate: bool) -> CompletedProcess:
+def _exec(
+    cmd: list[str], submission_dict: AnyDict, logger: logging.Logger, validate: bool
+) -> CompletedProcess:
     '''
     Internal function.
 
@@ -37,17 +39,26 @@ def _exec(cmd: list[str], submission_dict: AnyDict, logger: logging.Logger, vali
         execcmd = config.cmd_prefix.split() + cmd
 
     logger.debug('Calling %s with input %s', execcmd, cmd_stdin)
-    p = run(execcmd, input=cmd_stdin, capture_output=True, encoding='utf-8', check=False)
+    p = run(
+        execcmd, input=cmd_stdin, capture_output=True, encoding='utf-8', check=False
+    )
     logger.debug('run(): result = %s', p)
+    print(f'run(): result = {p}')
 
     return p
 
 
-def _parse(p: CompletedProcess, logger: logging.Logger, validate: bool) -> tuple[AnyDict | None, str | None]:
+def _parse(
+    p: CompletedProcess, logger: logging.Logger, validate: bool
+) -> tuple[AnyDict | None, str | None]:
     '''Given a CompletedProcess, process the output. Returns JSON dict
     from stdout and any stderr that has been generated.'''
     if p.returncode:
-        raise ClippyValidationError(p.stderr) if validate else ClippyBackendError(p.stderr)
+        raise (
+            ClippyValidationError(p.stderr)
+            if validate
+            else ClippyBackendError(p.stderr)
+        )
 
     if p.stderr:
         logger.warning('Received stderr: %s', p.stderr)
@@ -65,7 +76,9 @@ def _exec_and_parse(
     return _parse(p, logger, validate)
 
 
-def _validate(cmd: str | list[str], dct: AnyDict, logger: logging.Logger) -> tuple[bool, str]:
+def _validate(
+    cmd: str | list[str], dct: AnyDict, logger: logging.Logger
+) -> tuple[bool, str]:
     '''
     Converts the dictionary dct into a json file and calls executable cmd.
     Returns true/false (validation successful) and any stderr.

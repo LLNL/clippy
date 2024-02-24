@@ -4,21 +4,21 @@ sys.path.append('src')
 
 import pytest
 from clippy.error import ClippyValidationError
-import clippy.backend
+import clippy
 
 
 @pytest.fixture(scope='session')
 def bag():
-    return clippy.backend.ClippyBag()
+    return clippy.ClippyBag()
 
 
 @pytest.fixture(scope='session')
 def fun():
-    return clippy.backend.ClippyFunctions()
+    return clippy.ClippyFunctions()
 
 
 def test_imports():
-    assert "ClippyBag" in clippy.backend.__dict__
+    assert "ClippyBag" in clippy.__dict__
 
 
 def test_clippy_bag(bag):

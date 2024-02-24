@@ -69,7 +69,9 @@ class ClippySerializable:
             raise ClippySerializationError("__clippy_type__.__class__ is unspecified")
 
         if type_name not in config._dynamic_types:
-            raise ClippySerializationError(f"\"{type_name}\" is not a known type, please clippy import it.")
+            raise ClippySerializationError(
+                f"\"{type_name}\" is not a known type, please clippy import it."
+            )
 
         # get the type to deserialize into from the _dynamic_types dict
         # this does not account for the module the type may exist in
@@ -96,7 +98,14 @@ def _form_method_arguments(method_args: AnyDict | None) -> tuple[list[Any], AnyD
         return [], {}
 
     sorted_method_args = sorted(
-        [(method_args[arg_name]["position"], arg_name, method_args[arg_name]["arg_value"]) for arg_name in method_args]
+        [
+            (
+                method_args[arg_name]["position"],
+                arg_name,
+                method_args[arg_name]["arg_value"],
+            )
+            for arg_name in method_args
+        ]
     )
     keyword_args = {arg[1]: arg[2] for arg in sorted_method_args if arg[0] == -1}
     positionals = [arg[2] for arg in sorted_method_args if arg[0] > -1]
