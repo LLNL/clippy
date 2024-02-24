@@ -1,7 +1,11 @@
+"""
+    Functions to check versions. Requires semver.
+"""
+
 from __future__ import annotations
 from semver import Version
-from clippy.anydict import AnyDict
-from clippy import config
+from ..anydict import AnyDict
+from .. import config
 
 
 def _check_version(output_dict: AnyDict | None) -> bool:

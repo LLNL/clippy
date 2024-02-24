@@ -5,7 +5,7 @@
 
 """ Holds the expression building code. """
 
-from clippy.serialization import ClippySerializable
+from .serialization import ClippySerializable
 
 
 class Expression(ClippySerializable):

@@ -5,7 +5,7 @@
 
 """ The clippy configuration file. To be edited by users. """
 
-from clippy.anydict import AnyDict
+from .anydict import AnyDict
 
 # semver version restrictions for the backend
 REQUIRED_BACKEND: str = '>=0.2.0, <0.3.0'
