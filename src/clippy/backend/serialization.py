@@ -1,8 +1,12 @@
+"""
+    Clippy serialization functions and classes.
+"""
+
 from __future__ import annotations
 from typing import Any
-from clippy.error import ClippySerializationError
-from clippy import config
-from clippy.anydict import AnyDict
+from ..error import ClippySerializationError
+from .. import config
+from ..anydict import AnyDict
 
 
 # TODO: SAB 20240204 complete typing here.
@@ -107,7 +111,7 @@ def encode_clippy_json(o: Any) -> Any:
     #         as expression.py imports ClippySerializable from serialization.py.
     #         rethink this design.
     # PP: question: would it work to have Expression override to_serial?
-    from clippy.expression import Expression
+    from .expression import Expression
 
     # PP (04/11/21): note to self: do not change o.to_serial to o.to_json!!
     if isinstance(o, Expression):

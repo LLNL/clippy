@@ -3,44 +3,56 @@ import sys
 sys.path.append('src')
 
 import pytest
-from clippy import Clippy
 from clippy.error import ClippyValidationError
-
-
-@pytest.fixture(scope="session")
-def backend(pytestconfig):
-    return pytestconfig.getoption("backend")
+import clippy.backend
 
 
 @pytest.fixture(scope='session')
-def c(backend):
-    return Clippy({'test': backend}, cmd_prefix='', loglevel=0)
+def bag():
+    return clippy.backend.ClippyBag()
 
 
-def test_print_backend(backend):
-    print(f"\ncommand line param (backend): {backend}")
+@pytest.fixture(scope='session')
+def fun():
+    return clippy.backend.ClippyFunctions()
 
 
-def test_clippy_creation(c):
-    assert 'returns_int' in c.test.__dict__
+def test_imports():
+    assert "ClippyBag" in clippy.backend.__dict__
 
 
-def test_clippy_call_with_string(c):
-    assert c.test.call_with_string('Seth') == 'Howdy, Seth'
+def test_clippy_bag(bag):
+
+    bag.insert("foo")
+    assert bag.size() == 1
+    bag.insert("bar")
+    assert bag.size() == 2
+    bag.insert("foo")
+    assert bag.size() == 3
+    bag.remove("foo")
+    assert bag.size() == 2
+    bag.remove("zzz")
+    assert bag.size() == 2
+    assert "foo" in repr(bag) and "bar" in repr(bag)
+    assert "foo" in str(bag) and "bar" in str(bag)
+
+
+def test_clippy_call_with_string(fun):
+    assert fun.call_with_string('Seth') == 'Howdy, Seth'
     with pytest.raises(ClippyValidationError) as e:
-        c.test.call_with_string()
+        fun.call_with_string()
 
 
-def test_clippy_returns_int(c):
-    assert c.test.returns_int() == 42
+def test_clippy_returns_int(fun):
+    assert fun.returns_int() == 42
 
 
-def test_clippy_returns_string(c):
-    assert c.test.returns_string() == 'asdf'
+def test_clippy_returns_string(fun):
+    assert fun.returns_string() == 'asdf'
 
 
-def test_clippy_returns_bool(c):
-    assert c.test.returns_bool()
+def test_clippy_returns_bool(fun):
+    assert fun.returns_bool()
 
 
 # def test_clippy_returns_dict(c):
@@ -51,10 +63,10 @@ def test_clippy_returns_bool(c):
 #     assert d.get('c') == 3
 
 
-def test_clippy_returns_vec_int(c):
-    assert c.test.returns_vec_int() == [0, 1, 2, 3, 4, 5]
+def test_clippy_returns_vec_int(fun):
+    assert fun.returns_vec_int() == [0, 1, 2, 3, 4, 5]
 
 
-def test_clippy_returns_optional_string(c):
-    assert c.test.call_with_optional_string() == 'Howdy, World'
-    assert c.test.call_with_optional_string(name='Seth') == 'Howdy, Seth'
+def test_clippy_returns_optional_string(fun):
+    assert fun.call_with_optional_string() == 'Howdy, World'
+    assert fun.call_with_optional_string(name='Seth') == 'Howdy, Seth'

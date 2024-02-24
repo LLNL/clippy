@@ -1,15 +1,19 @@
+"""
+    Functions to execute backend programs.
+"""
+
 from __future__ import annotations
 import json
 import logging
 from subprocess import run, CompletedProcess
-from clippy.anydict import AnyDict
-from clippy import config
+from ..anydict import AnyDict
+from .. import config
 
-from .error import ClippyValidationError, ClippyBackendError
+from ..error import ClippyValidationError, ClippyBackendError
 from .serialization import encode_clippy_json, decode_clippy_json
 
 
-def _exec(cmd: str, submission_dict: AnyDict, logger: logging.Logger, validate: bool) -> CompletedProcess:
+def _exec(cmd: list[str], submission_dict: AnyDict, logger: logging.Logger, validate: bool) -> CompletedProcess:
     '''
     Internal function.
 
@@ -28,9 +32,9 @@ def _exec(cmd: str, submission_dict: AnyDict, logger: logging.Logger, validate: 
     cmd_stdin = json.dumps(submission_dict, default=encode_clippy_json)
 
     if validate:
-        execcmd = config.validate_cmd_prefix.split() + [cmd, config.DRY_RUN_FLAG]
+        execcmd = config.validate_cmd_prefix.split() + cmd + [config.DRY_RUN_FLAG]
     else:
-        execcmd = config.cmd_prefix.split() + [cmd]
+        execcmd = config.cmd_prefix.split() + cmd
 
     logger.debug('Calling %s with input %s', execcmd, cmd_stdin)
     p = run(execcmd, input=cmd_stdin, capture_output=True, encoding='utf-8', check=False)
@@ -54,31 +58,35 @@ def _parse(p: CompletedProcess, logger: logging.Logger, validate: bool) -> tuple
 
 
 def _exec_and_parse(
-    cmd: str, submission_dict: AnyDict, logger: logging.Logger, validate: bool
+    cmd: list[str], submission_dict: AnyDict, logger: logging.Logger, validate: bool
 ) -> tuple[AnyDict | None, str | None]:
     '''Internal function. Calls _exec and _parse'''
     p = _exec(cmd, submission_dict, logger, validate)
     return _parse(p, logger, validate)
 
 
-def _validate(cmd: str, dct: AnyDict, logger: logging.Logger) -> tuple[bool, str]:
+def _validate(cmd: str | list[str], dct: AnyDict, logger: logging.Logger) -> tuple[bool, str]:
     '''
     Converts the dictionary dct into a json file and calls executable cmd.
     Returns true/false (validation successful) and any stderr.
     '''
 
+    if isinstance(cmd, str):
+        cmd = [cmd]
     logger.debug('Validating %s', cmd)
     _, stderr = _exec_and_parse(cmd, dct, logger, validate=True)
     return stderr is not None, stderr or ''
 
 
-def _run(cmd: str, dct: AnyDict, logger: logging.Logger) -> AnyDict:
+def _run(cmd: str | list[str], dct: AnyDict, logger: logging.Logger) -> AnyDict:
     '''
     converts the dictionary dct into a json file and calls executable cmd
     '''
 
+    if isinstance(cmd, str):
+        cmd = [cmd]
     logger.debug('Running %s', cmd)
-    # TODO: should we do something with stderr?
+    # should we do something with stderr?
     output, _ = _exec_and_parse(cmd, dct, logger, validate=False)
 
     return output or {}

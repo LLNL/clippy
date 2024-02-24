@@ -63,10 +63,10 @@ jobs:
 
       - name: Pytest
         env:
-          BACKEND: ${{ env.BACKEND }}
+          CLIPPY_BACKEND_PATH: ${{ env.BACKEND }}
         run: |
           echo "backend = $BACKEND"
-          pytest . --backend=$BACKEND
+          pytest .
       # - name: Pytest
       #   run: |
       #     coverage run --source clippy/ -m pytest && coverage report -m --fail-under 99
