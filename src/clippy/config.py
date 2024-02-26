@@ -5,6 +5,8 @@
 
 """ The clippy configuration file. To be edited by users. """
 
+import logging
+
 from .anydict import AnyDict
 from .backends import fs
 
@@ -33,7 +35,9 @@ cmd_prefix: str = ''
 validate_cmd_prefix = ''
 
 # contol the log level of clippy
-loglevel: int = 0
+CLIPPY_LOGLEVEL: int = logging.DEBUG
+CLIPPY_LOGFORMAT: str = '%(asctime)s [%(filename)s:%(lineno)d (%(funcName)s) %(levelname)s: %(message)s'
+CLIPPY_LOGNAME: str = __name__
 
 # PRIVATE: this dict contains the class types that clippy has constructed.
 #          once constructed clippy will get the definition from this dict

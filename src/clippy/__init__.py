@@ -5,8 +5,14 @@ from __future__ import annotations
 import logging
 from . import config
 
-logger = logging.Logger('clippy')
-logger.setLevel(logging.DEBUG)
+# logging.basicConfig()
+logfmt = logging.Formatter(config.CLIPPY_LOGFORMAT)
+logger = logging.getLogger(config.CLIPPY_LOGNAME)
+
+handler = logging.StreamHandler()
+handler.setFormatter(logfmt)
+logger.addHandler(handler)
+logger.setLevel(config.CLIPPY_LOGLEVEL)
 
 
 def load_classes():

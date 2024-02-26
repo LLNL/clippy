@@ -21,24 +21,18 @@ from ...constants import JSON_FLAG, CLASS_META_FILE, STATE_KEY
 from ...error import ClippyConfigurationError, ClippyTypeError, ClippyValidationError
 
 PATH = sys.path[0]
-logger = logging.Logger('init')
-logger.setLevel(logging.DEBUG)
 
 
 def classes() -> dict[str, Any]:
     paths = config.CLIPPY_FS_BACKEND_PATHS
     _classes = {}
-    # print(f'{paths=}')
     for path in paths:
         files = os.scandir(path)
-        # print(f'  {classes=}')
         for f in files:
             if f.name in config.CLIPPY_FS_EXCLUDE_PATHS:
                 continue
             p = pathlib.Path(path, f)
-            # print(f'    {p=}, {os.path.isdir(p)=}')
             if os.path.isdir(p):
-                print(f'appending class at {p=}')
                 _cls = _create_class(f.name, path)
                 _classes[f.name] = _cls
     # cmds = get_registered_commands(logger, {'foo': pathlib.Path(origin, name)})
@@ -48,7 +42,6 @@ def classes() -> dict[str, Any]:
 
 # All backends must have a "classes" function that returns a class that can be added to Clippy.
 def _create_class(name: str, path: str):
-    print(f'creating class {name=}, {path=}')
     metafile = pathlib.Path(path, name, CLASS_META_FILE)
     meta = {}
     if metafile.exists():
@@ -56,17 +49,19 @@ def _create_class(name: str, path: str):
             meta = json.load(json_file)
     meta['_name'] = name
     meta['_path'] = path
-    meta['logger'] = logger
+    class_logger = logging.getLogger(topconfig.CLIPPY_LOGNAME + '.' + name)
+    class_logger.setLevel(topconfig.CLIPPY_LOGLEVEL)
+    meta['logger'] = class_logger
+
     cls = type(name, (ClippySerializable,), meta)
     classpath = pathlib.Path(path, name)
     for file in os.scandir(classpath):
         fullpath = pathlib.Path(classpath, file)
-        print(f' checking {file.name=}, {fullpath=}')
         if os.access(fullpath, os.X_OK) and file.is_file():
             try:
                 _process_executable(str(fullpath), cls)
             except ClippyConfigurationError as e:
-                print(f'error processing {fullpath}: {e}i; ignoring.')
+                class_logger.warning("error processing %s: %s; ignoring", fullpath, e)
 
     return cls
 
@@ -80,12 +75,12 @@ def _process_executable(executable: str, cls):
              symtable (by default globals()).
     '''
 
-    print(f'processing executable {executable}')
+    cls.logger.debug('processing executable %s', executable)
     # name = os.path.basename(executable)
     cmd = [executable, JSON_FLAG]
     # open file, will be received through std out
     try:
-        j = _run(cmd, {}, logger)
+        j = _run(cmd, {}, cls.logger)
 
     except CalledProcessError as e:
         raise ClippyConfigurationError("Execution error " + e.stderr) from e
@@ -96,7 +91,6 @@ def _process_executable(executable: str, cls):
     if not _check_version(j):
         raise ClippyConfigurationError("Invalid version information in " + executable)
 
-    print(f'{j=}')
     docstring = j.get("desc", "")
     args = j.get("args", {})
     method = j["method_name"]
