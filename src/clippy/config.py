@@ -45,4 +45,16 @@ CLIPPY_LOGNAME: str = __name__
 _dynamic_types: AnyDict = {}
 
 # The name of the selector key in the meta.json files.
-selector_key = 'selectors'
+# these selectors cannot be dropped.
+initial_selector_key = 'initial_selectors'
+# The name in the json returns. If this key exists in the results
+# then the entire selector hierarchy is replaced with this.
+dynamic_selector_key = 'selectors'
+
+
+# { "selectors:": {
+#     ("selector_name", "selector_desc"): {
+#         ("selector_name", "selector_desc"): {}
+#         (selector_name", "selector_desc"): {}
+#     }
+# }}

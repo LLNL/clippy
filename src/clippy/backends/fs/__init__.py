@@ -18,8 +18,8 @@ from ..expression import Selector
 from ..serialization import ClippySerializable
 
 from ... import config as topconfig
-from ...constants import JSON_FLAG, CLASS_META_FILE, STATE_KEY
-from ...error import ClippyConfigurationError, ClippyTypeError, ClippyValidationError
+from ...constants import JSON_FLAG, CLASS_META_FILE, STATE_KEY, SELECTOR_KEY
+from ...error import ClippyConfigurationError, ClippyTypeError, ClippyValidationError, ClippyInvalidSelectorError
 
 PATH = sys.path[0]
 
@@ -49,7 +49,7 @@ def _create_class(name: str, path: str):
         with open(metafile, 'r', encoding='utf-8') as json_file:
             meta = json.load(json_file)
     # pull the selectors out since we don't want them in the class definition right now
-    selectors = meta.pop(topconfig.selector_key, {})
+    selectors = meta.pop(topconfig.initial_selector_key, {})
     meta['_name'] = name
     meta['_path'] = path
     class_logger = logging.getLogger(topconfig.CLIPPY_LOGNAME + '.' + name)
@@ -68,10 +68,9 @@ def _create_class(name: str, path: str):
 
     # add the selectors
     # this should be in the meta.json file.
-    for selector, desc in selectors.items():
-        setattr(cls, selector, Selector(None, selector))
-        sel = getattr(cls, selector)
-        sel.__doc__ = desc
+    for selector, docstr in selectors.items():
+        print(f'adding {selector} to class')
+        setattr(cls, selector, Selector(None, selector, docstr))
     return cls
 
 
@@ -173,6 +172,12 @@ def _define_method(cls, name: str, executable: str, docstr: str, arguments: list
             # ~ for key in statej:
             #    ~ statedesc.append(key)
             #    ~ setattr(self, key, statej[key])
+
+        if SELECTOR_KEY in outj:
+            for topsel, subsels in outj['SELECTOR_KEY'].items():
+                if not hasattr(self, topsel):
+                    raise ClippyInvalidSelectorError(f'selector {topsel} not found in class; aborting')
+                self.getaddr(topsel)._import_from_dict(subsels)
 
         # return result
         if outj.get('returns_self', False):

@@ -5,13 +5,18 @@
 
 """ Holds the expression building code. """
 
+from __future__ import annotations
 import json
 from .serialization import ClippySerializable
+from ..anydict import AnyDict
+
+from typing import Any
 
 
 class Expression(ClippySerializable):
-    def __init__(self, op, o1, o2):
+    def __init__(self, op: str | None, o1: Selector, o2: Any):
         super().__init__()
+        # if op is None then this expression is just a native Selector held in o1.
         self.op = op
         self.o1 = o1
         self.o2 = o2
@@ -120,49 +125,72 @@ class Expression(ClippySerializable):
         return {self.op: [o1, o2]}
 
 
-class Field(Expression):
-    def __init__(self, name):
+class Selector(Expression):  # pylint: disable=W0223
+    def __init__(self, parent: Selector | None, name: str, docstr: str):
+        super().__init__(None, self, None)  # op and o2 are None to represent this as a variable.
+        self.parent = parent
         self.name = name
+        setattr(self, '__doc__', docstr)
+        self.fullname: str = self.name if self.parent is None else f"{self.parent.fullname}.{self.name}"
+        self.subselectors: set[Selector] = set()
+
+    def __hash__(self):
+        return hash(self.fullname)
 
     def to_dict(self):
-        return {'var': self.name}
+        return {'var': self.fullname}
+
+    def hierarchy(self, acc: list[tuple[str, str]] | None = None):
+        if acc is None:
+            acc = []
+        acc.append((self.fullname, self.__doc__ or ''))
+        for subsel in self.subselectors:
+            subsel.hierarchy(acc)
+        return acc
+
+    def describe(self):
+        hier = self.hierarchy()
+        maxlen = max((len(sub_desc[0]) for sub_desc in hier))
+        return '\n'.join(f'{sub_desc[0]:<{maxlen+2}} {sub_desc[1]}' for sub_desc in hier)
 
     def __str__(self):
-        return str(self.to_dict())
+        return repr(self.to_dict())
 
     def __repr__(self):
-        return str(self.to_dict())
+        return repr(self.to_dict())
 
     def to_json(self):
         return json.dumps(self.to_dict())
 
     def to_serial(self):
-        return {"var": self.name}
+        return {"var": self.fullname}
 
     def _express(self, op, o):
         return Expression(op, self, o)
 
+    def _add_subselector(self, name: str, docstr: str):
+        '''add a subselector to this selector'''
+        subsel = Selector(self, name, docstr)
+        self.__setattr__(name, subsel)
+        self.subselectors.add(subsel)
 
-class Selector(Expression):
-    def __init__(self, parent, name):
-        # not used at the moment but could be potentially used
-        # to get parent state information that can inform the
-        # field/expression creation
-        self.parent = parent
-        self._fld_name_sel_08 = name
+    def _del_subselector(self, name: str):
+        delattr(self, name)
+        self.subselectors.remove(getattr(self, name))
 
-    def __str__(self):
-        return str(self.to_dict())
+    def _clear_subselectors(self):
+        '''removes all subselectors'''
+        for subsel in self.subselectors:
+            delattr(self, subsel)
+        self.subselectors = []
 
-    def __repr__(self):
-        return str(self.to_dict())
-
-    def to_dict(self):
-        return {"var": self._fld_name_sel_08}
-
-    def to_json(self):
-        return json.dumps(self.to_dict())
-
-    def __getattr__(self, key):
-        field = Field(f"{self._fld_name_sel_08}.{key}")
-        return field
+    def _import_from_dict(self, d: AnyDict, merge: bool = False):
+        '''Imports subselectors from a dictionary.
+        If `merge = True`, do not clear subselectors first.'''
+        # clear all children
+        if not merge:
+            self._clear_subselectors()
+        for name, subdict in d.items():
+            docstr = subdict.get('__doc__', '')
+            self._add_subselector(name, docstr)
+            getattr(self, name)._import_from_dict(subdict.get('subselectors', {}))

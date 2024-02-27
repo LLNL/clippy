@@ -3,7 +3,7 @@
 DRY_RUN_FLAG = '--clippy-validate'
 JSON_FLAG = '--clippy-help'
 STATE_KEY = '_state'
-CLASS_KEY = '_class'
+SELECTOR_KEY = '_selectors'
 REAL = 'real'
 STRING = 'string'
 UINT = 'uint'

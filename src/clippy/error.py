@@ -46,3 +46,9 @@ class ClippyTypeError(ClippyError):
     '''
     This error represents an error with the type of data being passed to the back end.
     '''
+
+
+class ClippyInvalidSelectorError(ClippyError):
+    '''
+    This error represents an error with a selector that is not defined for a given clippy class.
+    '''
