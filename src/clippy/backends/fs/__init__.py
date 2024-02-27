@@ -14,6 +14,7 @@ from typing import Any
 from . import config
 from ..version import _check_version
 from ..execution import _validate, _run
+from ..expression import Selector
 from ..serialization import ClippySerializable
 
 from ... import config as topconfig
@@ -47,6 +48,8 @@ def _create_class(name: str, path: str):
     if metafile.exists():
         with open(metafile, 'r', encoding='utf-8') as json_file:
             meta = json.load(json_file)
+    # pull the selectors out since we don't want them in the class definition right now
+    selectors = meta.pop(topconfig.selector_key, {})
     meta['_name'] = name
     meta['_path'] = path
     class_logger = logging.getLogger(topconfig.CLIPPY_LOGNAME + '.' + name)
@@ -63,6 +66,12 @@ def _create_class(name: str, path: str):
             except ClippyConfigurationError as e:
                 class_logger.warning("error processing %s: %s; ignoring", fullpath, e)
 
+    # add the selectors
+    # this should be in the meta.json file.
+    for selector, desc in selectors.items():
+        setattr(cls, selector, Selector(None, selector))
+        sel = getattr(cls, selector)
+        sel.__doc__ = desc
     return cls
 
 
@@ -95,10 +104,6 @@ def _process_executable(executable: str, cls):
     args = j.get("args", {})
     method = j["method_name"]
     _define_method(cls, method, executable, docstring, args)
-    # add the selectors
-    # this should be in the meta.json file.
-    # for selector in selectors:
-    #     setattr(cls, selector, Selector(None, selector))
     return cls
 
 

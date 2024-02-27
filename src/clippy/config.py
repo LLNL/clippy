@@ -43,3 +43,6 @@ CLIPPY_LOGNAME: str = __name__
 #          once constructed clippy will get the definition from this dict
 #          to create new instances.
 _dynamic_types: AnyDict = {}
+
+# The name of the selector key in the meta.json files.
+selector_key = 'selectors'

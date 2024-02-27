@@ -5,6 +5,7 @@
 
 """ Holds the expression building code. """
 
+import json
 from .serialization import ClippySerializable
 
 
@@ -79,9 +80,7 @@ class Expression(ClippySerializable):
         return self._express("or", o)
 
     def __contains__(self, o):
-        raise NotImplementedError(
-            "syntax a in b is not supported. Use b.contains(a) instead."
-        )
+        raise NotImplementedError("syntax a in b is not supported. Use b.contains(a) instead.")
         # will not work when written as "x in set",
         #   b/c the in-operator always converts the result to bool
         #   https://stackoverflow.com/questions/38542543/functionality-of-python-in-vs-contains
@@ -100,6 +99,9 @@ class Expression(ClippySerializable):
         return self._express("cat", o)
 
     def __str__(self):
+        return self.to_json()
+
+    def __repr__(self):
         return self.to_json()
 
     def to_json(self):
@@ -122,8 +124,17 @@ class Field(Expression):
     def __init__(self, name):
         self.name = name
 
-    # ~ def to_json(self):
-    # ~ return f"{{\"var\": [\"{self.name}\"]}}"
+    def to_dict(self):
+        return {'var': self.name}
+
+    def __str__(self):
+        return str(self.to_dict())
+
+    def __repr__(self):
+        return str(self.to_dict())
+
+    def to_json(self):
+        return json.dumps(self.to_dict())
 
     def to_serial(self):
         return {"var": self.name}
@@ -132,13 +143,25 @@ class Field(Expression):
         return Expression(op, self, o)
 
 
-class Selector:
+class Selector(Expression):
     def __init__(self, parent, name):
         # not used at the moment but could be potentially used
         # to get parent state information that can inform the
         # field/expression creation
         self.parent = parent
         self._fld_name_sel_08 = name
+
+    def __str__(self):
+        return str(self.to_dict())
+
+    def __repr__(self):
+        return str(self.to_dict())
+
+    def to_dict(self):
+        return {"var": self._fld_name_sel_08}
+
+    def to_json(self):
+        return json.dumps(self.to_dict())
 
     def __getattr__(self, key):
         field = Field(f"{self._fld_name_sel_08}.{key}")
