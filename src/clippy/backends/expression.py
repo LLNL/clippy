@@ -182,7 +182,7 @@ class Selector(Expression):  # pylint: disable=W0223
         '''removes all subselectors'''
         for subsel in self.subselectors:
             delattr(self, subsel)
-        self.subselectors = []
+        self.subselectors = set()
 
     def _import_from_dict(self, d: AnyDict, merge: bool = False):
         '''Imports subselectors from a dictionary.

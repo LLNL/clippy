@@ -1,40 +1,65 @@
+import pytest
 import sys
 
 sys.path.append('src')
 
-import pytest
 from clippy.error import ClippyValidationError
 import clippy
 
 
 @pytest.fixture(scope='session')
 def bag():
-    return clippy.ClippyBag()
+    return clippy.TestBag()
+
+
+@pytest.fixture(scope='session')
+def set():
+    return clippy.TestSet()
 
 
 @pytest.fixture(scope='session')
 def fun():
-    return clippy.ClippyFunctions()
+    return clippy.TestFunctions()
 
 
 def test_imports():
-    assert "ClippyBag" in clippy.__dict__
+    assert "TestBag" in clippy.__dict__
 
 
-def test_clippy_bag(bag):
+def test_bag(bag):
 
-    bag.insert("foo")
+    bag.insert(41)
     assert bag.size() == 1
-    bag.insert("bar")
+    bag.insert(42)
     assert bag.size() == 2
-    bag.insert("foo")
+    bag.insert(41)
     assert bag.size() == 3
-    bag.remove("foo")
+    bag.remove(41)
     assert bag.size() == 2
-    bag.remove("zzz")
+    bag.remove(99)
     assert bag.size() == 2
-    assert "foo" in repr(bag) and "bar" in repr(bag)
-    assert "foo" in str(bag) and "bar" in str(bag)
+    bag.insert(50)
+    bag.insert(51)
+    assert bag.size() == 4
+    bag.remove_if(bag.value > 49)
+    assert bag.size() == 2
+    bag.remove_if(bag.value > 49)
+    assert bag.size() == 2
+    assert "41" in str(bag) and "42" in str(bag)
+
+    bag.insert(50)
+    bag.insert(51)
+    bag.remove_if(bag.value < 50)
+    assert bag.size() == 2
+    assert "50" in str(bag) and "51" in str(bag)
+
+    bag.remove_if(bag.value == 51)
+    assert bag.size() == 1
+    assert "50" in str(bag)
+
+    bag.remove_if(bag.value == 51)
+    assert bag.size() == 1
+    assert "50" in str(bag)
 
 
 def test_clippy_call_with_string(fun):
@@ -55,12 +80,12 @@ def test_clippy_returns_bool(fun):
     assert fun.returns_bool()
 
 
-# def test_clippy_returns_dict(c):
-#     d = c.test.returns_dict()
-#     assert len(d) == 3
-#     assert d.get('a') == 1
-#     assert d.get('b') == 2
-#     assert d.get('c') == 3
+def test_clippy_returns_dict(fun):
+    d = fun.returns_dict()
+    assert len(d) == 3
+    assert d.get('a') == 1
+    assert d.get('b') == 2
+    assert d.get('c') == 3
 
 
 def test_clippy_returns_vec_int(fun):

@@ -174,10 +174,10 @@ def _define_method(cls, name: str, executable: str, docstr: str, arguments: list
             #    ~ setattr(self, key, statej[key])
 
         if SELECTOR_KEY in outj:
-            for topsel, subsels in outj['SELECTOR_KEY'].items():
+            for topsel, subsels in outj[SELECTOR_KEY].items():
                 if not hasattr(self, topsel):
                     raise ClippyInvalidSelectorError(f'selector {topsel} not found in class; aborting')
-                self.getaddr(topsel)._import_from_dict(subsels)
+                getattr(self, topsel)._import_from_dict(subsels)
 
         # return result
         if outj.get('returns_self', False):
