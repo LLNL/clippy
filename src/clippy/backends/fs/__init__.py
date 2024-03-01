@@ -18,8 +18,9 @@ from ..expression import Selector
 from ..serialization import ClippySerializable
 
 from ... import config as topconfig
-from ...constants import JSON_FLAG, CLASS_META_FILE, STATE_KEY, SELECTOR_KEY
+from ...constants import JSON_FLAG, CLASS_META_FILE, STATE_KEY, SELECTOR_KEY, INITIAL_SELECTOR_KEY
 from ...error import ClippyConfigurationError, ClippyTypeError, ClippyValidationError, ClippyInvalidSelectorError
+from ...utils import flat_dict_to_nested
 
 PATH = sys.path[0]
 
@@ -49,7 +50,7 @@ def _create_class(name: str, path: str):
         with open(metafile, 'r', encoding='utf-8') as json_file:
             meta = json.load(json_file)
     # pull the selectors out since we don't want them in the class definition right now
-    selectors = meta.pop(topconfig.initial_selector_key, {})
+    selectors = meta.pop(INITIAL_SELECTOR_KEY, {})
     meta['_name'] = name
     meta['_path'] = path
     class_logger = logging.getLogger(topconfig.CLIPPY_LOGNAME + '.' + name)
@@ -174,7 +175,8 @@ def _define_method(cls, name: str, executable: str, docstr: str, arguments: list
             #    ~ setattr(self, key, statej[key])
 
         if SELECTOR_KEY in outj:
-            for topsel, subsels in outj[SELECTOR_KEY].items():
+            d = flat_dict_to_nested(outj[SELECTOR_KEY])
+            for topsel, subsels in d.items():
                 if not hasattr(self, topsel):
                     raise ClippyInvalidSelectorError(f'selector {topsel} not found in class; aborting')
                 getattr(self, topsel)._import_from_dict(subsels)

@@ -9,8 +9,8 @@ from __future__ import annotations
 import json
 from .serialization import ClippySerializable
 from ..anydict import AnyDict
-from ..utils import flat_dict_to_nested
 
+from .. import constants
 
 from typing import Any
 
@@ -183,23 +183,19 @@ class Selector(Expression):  # pylint: disable=W0223
     def _clear_subselectors(self):
         '''removes all subselectors'''
         for subsel in self.subselectors:
-            delattr(self, subsel)
+            delattr(self, subsel.name)
         self.subselectors = set()
 
-    def _import_from_dict(self, flat_dict: AnyDict, merge: bool = False):
+    def _import_from_dict(self, d: AnyDict, merge: bool = False):
         '''Imports subselectors from a dictionary.
         If `merge = True`, do not clear subselectors first.
-
-        Input dictionary has dot-delimited keys. This function uses
-        utils.flat_dict_to_nested to create the nested dictionary.
         '''
 
-        d = flat_dict_to_nested(flat_dict)
         # clear all children
         if not merge:
             self._clear_subselectors()
 
-        for name, subdict in d.items():
+        for name, subdict in d.get(constants.SELECTOR_KEY, {}).items():
             docstr = subdict.get('__doc__', '')
             self._add_subselector(name, docstr)
-            getattr(self, name)._import_from_dict(subdict.get('subselectors', {}))
+            getattr(self, name)._import_from_dict(subdict)
