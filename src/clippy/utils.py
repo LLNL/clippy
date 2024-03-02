@@ -2,7 +2,7 @@
     Utility functions
 """
 
-from .anydict import AnyDict
+from .clippy_types import AnyDict
 from .error import ClippyInvalidSelectorError
 from .constants import SELECTOR_KEY
 

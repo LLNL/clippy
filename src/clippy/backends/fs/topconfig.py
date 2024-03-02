@@ -1,11 +1,10 @@
-import logging
-from .clippy_types import CONFIG_ENTRY
-
-_clippy_cfg: dict[str, CONFIG_ENTRY] = {
+_clippy_top_entries: dict[str, CONFIG_ENTRY] = {
     # backends to use for Clippy.
-    "backends": ("CLIPPY_BACKENDS", ['fs']),
+    "backends": ("CLIPPY_BACKENDS", [fs]),
     # semver version restrictions for the backend
     "required_versions": ("CLIPPY_REQ_VERSIONS", '>=0.2.0, <0.3.0'),
+    # flag for specifying a dry run to the backend
+    "dryrun_flag": ("CLIPPY_DRYRUN_FLAG", '--clippy-validate'),
     # key to json entry that holds reference overrides from backend functions.
     "reference_key": ("CLIPPY_REFERENCE_KEY", 'references'),
     # key to json entry that holds return data from backend functions.

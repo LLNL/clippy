@@ -6,7 +6,7 @@ from __future__ import annotations
 from typing import Any
 from ..error import ClippySerializationError
 from .. import config
-from ..anydict import AnyDict
+from ..clippy_types import AnyDict
 
 
 # TODO: SAB 20240204 complete typing here.

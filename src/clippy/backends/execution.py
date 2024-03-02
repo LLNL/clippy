@@ -6,8 +6,9 @@ from __future__ import annotations
 import json
 import logging
 from subprocess import run, CompletedProcess
-from ..anydict import AnyDict
-from .. import config
+from ..clippy_types import AnyDict
+from .. import cfg
+from .. import constants
 
 from ..error import ClippyValidationError, ClippyBackendError
 from .serialization import encode_clippy_json, decode_clippy_json
@@ -32,9 +33,10 @@ def _exec(cmd: list[str], submission_dict: AnyDict, logger: logging.Logger, vali
     cmd_stdin = json.dumps(submission_dict, default=encode_clippy_json)
 
     if validate:
-        execcmd = config.validate_cmd_prefix.split() + cmd + [config.DRY_RUN_FLAG]
+        # print(f'in _exec: {cfg.get("validate_cmd_prefix")=}')
+        execcmd = cfg.get('validate_cmd_prefix').split() + cmd + [constants.DRY_RUN_FLAG]
     else:
-        execcmd = config.cmd_prefix.split() + cmd
+        execcmd = cfg.get('cmd_prefix').split() + cmd
 
     logger.debug('Calling %s with input %s', execcmd, cmd_stdin)
     p = run(execcmd, input=cmd_stdin, capture_output=True, encoding='utf-8', check=False)
