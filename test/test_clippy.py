@@ -10,24 +10,25 @@ from clippy.backends.expression import Selector
 import logging
 
 clippy.logger.setLevel(logging.WARN)
+logging.getLogger().setLevel(logging.WARN)
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def testbag():
     return clippy.TestBag()
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def testset():
     return clippy.TestSet()
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def testfun():
     return clippy.TestFunctions()
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def testsel():
     return clippy.TestSelector()
 
@@ -48,28 +49,72 @@ def test_bag(testbag):
     assert testbag.size() == 2
     testbag.remove(99)
     assert testbag.size() == 2
-    testbag.insert(50)
-    testbag.insert(51)
+
+
+def test_expression_gt_gte(testbag):
+    testbag.insert(10).insert(41).insert(42).insert(50).insert(51).insert(52)
+    assert testbag.size() == 6
+    testbag.remove_if(testbag.value > 51)
+    assert testbag.size() == 5
+    testbag.remove_if(testbag.value >= 50)
+    assert testbag.size() == 3
+    testbag.remove_if(testbag.value >= 99)
+    assert testbag.size() == 3
+
+
+def test_expression_lt_lte(testbag):
+    testbag.insert(10).insert(41).insert(42).insert(50).insert(51).insert(52)
+    testbag.remove_if(testbag.value < 42)
     assert testbag.size() == 4
-    testbag.remove_if(testbag.value > 49)
-    assert testbag.size() == 2
-    testbag.remove_if(testbag.value > 49)
-    assert testbag.size() == 2
-    assert "41" in str(testbag) and "42" in str(testbag)
-
-    testbag.insert(50)
-    testbag.insert(51)
-    testbag.remove_if(testbag.value < 50)
-    assert testbag.size() == 2
-    assert "50" in str(testbag) and "51" in str(testbag)
-
-    testbag.remove_if(testbag.value == 51)
+    testbag.remove_if(testbag.value <= 51)
     assert testbag.size() == 1
-    assert "50" in str(testbag)
 
-    testbag.remove_if(testbag.value == 51)
+
+def test_expression_eq_neq(testbag):
+    testbag.insert(10).insert(11).insert(12)
+    assert testbag.size() == 3
+    testbag.remove_if(testbag.value != 11)
     assert testbag.size() == 1
-    assert "50" in str(testbag)
+    testbag.remove_if(testbag.value == 11)
+    assert testbag.size() == 0
+
+
+def test_expresssion_add(testbag):
+    testbag.insert(10).insert(41).insert(42).insert(50).insert(51).insert(52)
+    testbag.remove_if(testbag.value + 30 > 70)
+    assert testbag.size() == 1
+
+
+def test_expression_sub(testbag):
+    testbag.insert(10).insert(41).insert(42).insert(50).insert(51).insert(52)
+    testbag.remove_if(testbag.value - 30 > 0)
+    assert testbag.size() == 1
+
+
+def test_expression_mul_div(testbag):
+    testbag.insert(10).insert(41).insert(42).insert(50).insert(51).insert(52)
+    testbag.remove_if(testbag.value * 2 / 4 > 10)
+    assert testbag.size() == 1
+
+
+# TODO: not yet implemented
+# def test_expression_floordiv(testbag):
+#     testbag.insert(10).insert(41).insert(42).insert(50).insert(51).insert(52)
+#     testbag.remove_if(testbag.value * 2 // 4.2 > 10)
+#     assert testbag.size() == 1
+
+
+def test_expression_mod(testbag):
+    testbag.insert(10).insert(41).insert(42).insert(50).insert(51).insert(52)
+    testbag.remove_if(testbag.value % 2 == 0)
+    assert testbag.size() == 2
+
+
+# TODO: not yet implemented
+# def test_expression_pow(testbag):
+#     testbag.insert(10).insert(41).insert(42).insert(50).insert(51).insert(52)
+#     testbag.remove_if(testbag.value**2 > 1000)
+#     assert testbag.size() == 2
 
 
 def test_clippy_call_with_string(testfun):
