@@ -20,12 +20,12 @@ def flat_dict_to_nested(input_dict: AnyDict) -> AnyDict:
             raise ClippyInvalidSelectorError("cannot set top-level selectors")
 
         *path, last = k.split('.')
+        if last.startswith('_'):
+            raise ClippyInvalidSelectorError("selectors must not start with an underscore.")
         curr_nest = output_dict
         for p in path:
             if p.startswith('_'):
-                raise ClippyInvalidSelectorError(
-                    "selectors must not start with an underscore."
-                )
+                raise ClippyInvalidSelectorError("selectors must not start with an underscore.")
             curr_nest.setdefault(p, {})
             curr_nest[p].setdefault(SELECTOR_KEY, {})
             curr_nest = curr_nest[p][SELECTOR_KEY]

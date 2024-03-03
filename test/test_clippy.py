@@ -3,9 +3,9 @@ import sys
 
 sys.path.append('src')
 
-from clippy.error import ClippyValidationError
 import clippy
-from clippy.backends.expression import Selector
+from clippy.error import ClippyValidationError, ClippyInvalidSelectorError
+from clippy.expressions import Selector
 
 import logging
 
@@ -97,6 +97,18 @@ def test_expression_mul_div(testbag):
     assert testbag.size() == 1
 
 
+def test_expression_or(testbag):
+    testbag.insert(10).insert(41).insert(42).insert(50).insert(51).insert(52)
+    testbag.remove_if((testbag.value < 41) | (testbag.value > 49))
+    assert testbag.size() == 2  # 41, 42
+
+
+def test_expression_and(testbag):
+    testbag.insert(10).insert(41).insert(42).insert(50).insert(51).insert(52)
+    testbag.remove_if((testbag.value > 40) & (testbag.value < 50))
+    assert testbag.size() == 4  # 10, 50, 51, 52
+
+
 # TODO: not yet implemented
 # def test_expression_floordiv(testbag):
 #     testbag.insert(10).insert(41).insert(42).insert(50).insert(51).insert(52)
@@ -119,7 +131,7 @@ def test_expression_mod(testbag):
 
 def test_clippy_call_with_string(testfun):
     assert testfun.call_with_string('Seth') == 'Howdy, Seth'
-    with pytest.raises(ClippyValidationError) as e:
+    with pytest.raises(ClippyValidationError):
         testfun.call_with_string()
 
 
@@ -165,3 +177,9 @@ def test_selectors(testsel):
 
     assert isinstance(testsel.nodes.b, Selector)
     assert isinstance(testsel.nodes.b.c, Selector)
+
+    with pytest.raises(ClippyInvalidSelectorError):
+        testsel.add(testsel.nodes, '_bad', desc="this is a bad selector name")
+
+    # with pytest.raises(ClippyInvalidSelectorError):
+    #     testsel.add(testsel, 'bad', desc="this is a top-level selector")

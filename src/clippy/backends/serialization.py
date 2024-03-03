@@ -69,9 +69,7 @@ class ClippySerializable:
             raise ClippySerializationError("__clippy_type__.__class__ is unspecified")
 
         if type_name not in _dynamic_types:
-            raise ClippySerializationError(
-                f"\"{type_name}\" is not a known type, please clippy import it."
-            )
+            raise ClippySerializationError(f"\"{type_name}\" is not a known type, please clippy import it.")
 
         # get the type to deserialize into from the _dynamic_types dict
         # this does not account for the module the type may exist in
@@ -120,7 +118,7 @@ def encode_clippy_json(o: Any) -> Any:
     #         as expression.py imports ClippySerializable from serialization.py.
     #         rethink this design.
     # PP: question: would it work to have Expression override to_serial?
-    from .expression import Expression
+    from ..expressions import Expression
 
     # PP (04/11/21): note to self: do not change o.to_serial to o.to_json!!
     if isinstance(o, Expression):

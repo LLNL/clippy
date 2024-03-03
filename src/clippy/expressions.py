@@ -8,9 +8,9 @@
 from __future__ import annotations
 import json
 from typing import Any
-from .serialization import ClippySerializable
-from .. import constants
-from ..clippy_types import AnyDict
+from .backends.serialization import ClippySerializable
+from . import constants
+from .clippy_types import AnyDict
 
 
 class Expression(ClippySerializable):
@@ -94,9 +94,7 @@ class Expression(ClippySerializable):
         return self._express("or", o)
 
     def __contains__(self, o):
-        raise NotImplementedError(
-            "syntax a in b is not supported. Use b.contains(a) instead."
-        )
+        raise NotImplementedError("syntax a in b is not supported. Use b.contains(a) instead.")
         # will not work when written as "x in set",
         #   b/c the in-operator always converts the result to bool
         #   https://stackoverflow.com/questions/38542543/functionality-of-python-in-vs-contains
@@ -140,15 +138,11 @@ class Selector(Expression):  # pylint: disable=abstract-method
     '''A Selector is a subset of `Expression` and represents a single variable.'''
 
     def __init__(self, parent: Selector | None, name: str, docstr: str):
-        super().__init__(
-            None, self, None
-        )  # op and o2 are None to represent this as a variable.
+        super().__init__(None, self, None)  # op and o2 are None to represent this as a variable.
         self.parent = parent
         self.name = name
         setattr(self, '__doc__', docstr)
-        self.fullname: str = (
-            self.name if self.parent is None else f"{self.parent.fullname}.{self.name}"
-        )
+        self.fullname: str = self.name if self.parent is None else f"{self.parent.fullname}.{self.name}"
         self.subselectors: set[Selector] = set()
 
     def __hash__(self):
@@ -168,9 +162,7 @@ class Selector(Expression):  # pylint: disable=abstract-method
     def describe(self):
         hier = self.hierarchy()
         maxlen = max((len(sub_desc[0]) for sub_desc in hier))
-        return '\n'.join(
-            f'{sub_desc[0]:<{maxlen+2}} {sub_desc[1]}' for sub_desc in hier
-        )
+        return '\n'.join(f'{sub_desc[0]:<{maxlen+2}} {sub_desc[1]}' for sub_desc in hier)
 
     def __str__(self):
         return repr(self.to_dict())
