@@ -17,7 +17,12 @@ from ..expression import Selector
 from ..serialization import ClippySerializable
 
 from ... import constants
-from ...error import ClippyConfigurationError, ClippyTypeError, ClippyValidationError, ClippyInvalidSelectorError
+from ...error import (
+    ClippyConfigurationError,
+    ClippyTypeError,
+    ClippyValidationError,
+    ClippyInvalidSelectorError,
+)
 from ...utils import flat_dict_to_nested
 
 from ...clippy_types import CLIPPY_CONFIG
@@ -198,7 +203,9 @@ def _define_method(
             d = flat_dict_to_nested(outj[constants.SELECTOR_KEY])
             for topsel, subsels in d.items():
                 if not hasattr(self, topsel):
-                    raise ClippyInvalidSelectorError(f'selector {topsel} not found in class; aborting')
+                    raise ClippyInvalidSelectorError(
+                        f'selector {topsel} not found in class; aborting'
+                    )
                 getattr(self, topsel)._import_from_dict(subsels)
 
         # return result
