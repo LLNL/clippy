@@ -18,7 +18,7 @@ _clippy_cfg: dict[str, CONFIG_ENTRY] = {
     # could be set to 'srun -n1 -ppdebug'
     "validate_cmd_prefix": ("CLIPPY_VALIDATE_CMD_PREFIX", ''),
     # contol the log level of clippy
-    "loglevel": ("CLIPPY_LOG_LEVEL", logging.WARNING),
+    "loglevel": ("CLIPPY_LOG_LEVEL", logging.DEBUG),
     "logformat": (
         "CLIPPY_LOGFORMAT",
         '%(asctime)s [%(filename)s:%(lineno)d (%(funcName)s) %(levelname)s: %(message)s',
