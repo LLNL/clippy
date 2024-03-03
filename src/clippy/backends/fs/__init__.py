@@ -12,11 +12,11 @@ from typing import Any
 
 
 from ..version import _check_version
-from ..execution import _validate, _run
+from ..execution import _validate, _run, _help
 from ..expression import Selector
 from ..serialization import ClippySerializable
 
-from ...constants import JSON_FLAG, CLASS_META_FILE, STATE_KEY, SELECTOR_KEY, INITIAL_SELECTOR_KEY
+from ...constants import HELP_FLAG, CLASS_META_FILE, STATE_KEY, SELECTOR_KEY, INITIAL_SELECTOR_KEY
 from ...error import ClippyConfigurationError, ClippyTypeError, ClippyValidationError, ClippyInvalidSelectorError
 from ...utils import flat_dict_to_nested
 
@@ -96,10 +96,9 @@ def _process_executable(executable: str, cls):
 
     cls.logger.debug('processing executable %s', executable)
     # name = os.path.basename(executable)
-    cmd = [executable, JSON_FLAG]
     # open file, will be received through std out
     try:
-        j = _run(cmd, {}, cls.logger, validate=True)
+        j = _help(executable, {}, cls.logger)
 
     except CalledProcessError as e:
         raise ClippyConfigurationError("Execution error " + e.stderr) from e

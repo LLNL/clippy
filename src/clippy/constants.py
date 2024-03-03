@@ -1,7 +1,7 @@
 """ Clippy constants. """
 
 DRY_RUN_FLAG = '--clippy-validate'
-JSON_FLAG = '--clippy-help'
+HELP_FLAG = '--clippy-help'
 STATE_KEY = '_state'
 
 # The name of the selector key in the meta.json files.
