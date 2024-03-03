@@ -4,8 +4,8 @@
 
 from __future__ import annotations
 from semver import Version
-from ..anydict import AnyDict
-from .. import config
+from ..clippy_types import AnyDict
+from .. import cfg
 
 
 def _check_version(output_dict: AnyDict | None) -> bool:
@@ -21,5 +21,5 @@ def _check_version(output_dict: AnyDict | None) -> bool:
         return False
     # print(f'{output_dict['version']=}')
     backend_ver = Version.parse(output_dict['version'])
-    config_vers = config.REQUIRED_BACKEND.split(',')
+    config_vers = cfg.get('required_versions').split(',')
     return all(backend_ver.match(v.strip()) for v in config_vers)

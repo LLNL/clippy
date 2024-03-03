@@ -6,14 +6,15 @@ from __future__ import annotations
 import json
 import logging
 from subprocess import run, CompletedProcess
-from ..anydict import AnyDict
-from .. import config
+from ..clippy_types import AnyDict
+from .. import cfg
+from .. import constants
 
 from ..error import ClippyValidationError, ClippyBackendError
 from .serialization import encode_clippy_json, decode_clippy_json
 
 
-def _exec(cmd: list[str], submission_dict: AnyDict, logger: logging.Logger, validate: bool) -> CompletedProcess:
+def _exec(cmd: list[str], submission_dict: AnyDict, logger: logging.Logger) -> CompletedProcess:
     '''
     Internal function.
 
@@ -31,13 +32,8 @@ def _exec(cmd: list[str], submission_dict: AnyDict, logger: logging.Logger, vali
     # ~ cmd_stdin = json.dumps(submission_dict)
     cmd_stdin = json.dumps(submission_dict, default=encode_clippy_json)
 
-    if validate:
-        execcmd = config.validate_cmd_prefix.split() + cmd + [config.DRY_RUN_FLAG]
-    else:
-        execcmd = config.cmd_prefix.split() + cmd
-
-    logger.debug('Calling %s with input %s', execcmd, cmd_stdin)
-    p = run(execcmd, input=cmd_stdin, capture_output=True, encoding='utf-8', check=False)
+    logger.debug('Calling %s with input %s', cmd, cmd_stdin)
+    p = run(cmd, input=cmd_stdin, capture_output=True, encoding='utf-8', check=False)
     logger.debug('run(): result = %s', p)
 
     return p
@@ -61,7 +57,7 @@ def _exec_and_parse(
     cmd: list[str], submission_dict: AnyDict, logger: logging.Logger, validate: bool
 ) -> tuple[AnyDict | None, str | None]:
     '''Internal function. Calls _exec and _parse'''
-    p = _exec(cmd, submission_dict, logger, validate)
+    p = _exec(cmd, submission_dict, logger)
     return _parse(p, logger, validate)
 
 
@@ -73,8 +69,9 @@ def _validate(cmd: str | list[str], dct: AnyDict, logger: logging.Logger) -> tup
 
     if isinstance(cmd, str):
         cmd = [cmd]
+    execcmd = cfg.get('validate_cmd_prefix').split() + cmd + [constants.DRY_RUN_FLAG]
     logger.debug('Validating %s', cmd)
-    _, stderr = _exec_and_parse(cmd, dct, logger, validate=True)
+    _, stderr = _exec_and_parse(execcmd, dct, logger, validate=True)
     return stderr is not None, stderr or ''
 
 
@@ -85,8 +82,24 @@ def _run(cmd: str | list[str], dct: AnyDict, logger: logging.Logger) -> AnyDict:
 
     if isinstance(cmd, str):
         cmd = [cmd]
-    logger.debug('Running %s', cmd)
+    execcmd = cfg.get('cmd_prefix').split() + cmd
+    logger.debug('Running %s', execcmd)
     # should we do something with stderr?
-    output, _ = _exec_and_parse(cmd, dct, logger, validate=False)
+    output, _ = _exec_and_parse(execcmd, dct, logger, validate=False)
+
+    return output or {}
+
+
+def _help(cmd: str | list[str], dct: AnyDict, logger: logging.Logger) -> AnyDict:
+    '''
+    Retrieves the help output from the clippy command. Does not use CMD_PREFIX. Uses
+    VALIDATE_CMD_PREFIX. Unlike _validate, returns the output.
+    '''
+    if isinstance(cmd, str):
+        cmd = [cmd]
+    execcmd = cfg.get('validate_cmd_prefix').split() + cmd + [constants.HELP_FLAG]
+    logger.debug('Running %s', execcmd)
+    # should we do something with stderr?
+    output, _ = _exec_and_parse(execcmd, dct, logger, validate=True)
 
     return output or {}

@@ -8,7 +8,7 @@
 from __future__ import annotations
 import json
 from .serialization import ClippySerializable
-from ..anydict import AnyDict
+from ..clippy_types import AnyDict
 
 from .. import constants
 

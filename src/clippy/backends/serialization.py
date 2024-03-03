@@ -5,8 +5,8 @@
 from __future__ import annotations
 from typing import Any
 from ..error import ClippySerializationError
-from .. import config
-from ..anydict import AnyDict
+from .. import _dynamic_types
+from ..clippy_types import AnyDict
 
 
 # TODO: SAB 20240204 complete typing here.
@@ -68,12 +68,12 @@ class ClippySerializable:
         if type_name is None:
             raise ClippySerializationError("__clippy_type__.__class__ is unspecified")
 
-        if type_name not in config._dynamic_types:
+        if type_name not in _dynamic_types:
             raise ClippySerializationError(f"\"{type_name}\" is not a known type, please clippy import it.")
 
         # get the type to deserialize into from the _dynamic_types dict
         # this does not account for the module the type may exist in
-        t = config._dynamic_types[type_name]
+        t = _dynamic_types[type_name]
 
         if not issubclass(t, ClippySerializable):
             raise ClippySerializationError(f"\"{type_name}\" is not serializable.")
