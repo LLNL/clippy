@@ -99,7 +99,7 @@ def _process_executable(executable: str, cls):
     cmd = [executable, JSON_FLAG]
     # open file, will be received through std out
     try:
-        j = _run(cmd, {}, cls.logger)
+        j = _run(cmd, {}, cls.logger, validate=True)
 
     except CalledProcessError as e:
         raise ClippyConfigurationError("Execution error " + e.stderr) from e

@@ -80,7 +80,7 @@ def _validate(cmd: str | list[str], dct: AnyDict, logger: logging.Logger) -> tup
     return stderr is not None, stderr or ''
 
 
-def _run(cmd: str | list[str], dct: AnyDict, logger: logging.Logger) -> AnyDict:
+def _run(cmd: str | list[str], dct: AnyDict, logger: logging.Logger, validate: bool = False) -> AnyDict:
     '''
     converts the dictionary dct into a json file and calls executable cmd
     '''
@@ -89,6 +89,6 @@ def _run(cmd: str | list[str], dct: AnyDict, logger: logging.Logger) -> AnyDict:
         cmd = [cmd]
     logger.debug('Running %s', cmd)
     # should we do something with stderr?
-    output, _ = _exec_and_parse(cmd, dct, logger, validate=False)
+    output, _ = _exec_and_parse(cmd, dct, logger, validate=validate)
 
     return output or {}
