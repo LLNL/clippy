@@ -3,6 +3,7 @@
 DRY_RUN_FLAG = '--clippy-validate'
 HELP_FLAG = '--clippy-help'
 STATE_KEY = '_state'
+OUTPUT_KEY = '_output'
 
 # The name of the selector key in the meta.json files.
 # these selectors cannot be dropped.

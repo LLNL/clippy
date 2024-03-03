@@ -8,8 +8,8 @@ from .config import _clippy_cfg
 from .clippy_types import AnyDict, CLIPPY_CONFIG
 
 cfg = CLIPPY_CONFIG(_clippy_cfg)
-
 _dynamic_types: AnyDict = {}
+
 # logging.basicConfig()
 logfmt = logging.Formatter(cfg.get("logformat"))
 logger = logging.getLogger(cfg.get("logname"))

@@ -16,7 +16,7 @@ from ..execution import _validate, _run, _help
 from ..expression import Selector
 from ..serialization import ClippySerializable
 
-from ...constants import HELP_FLAG, CLASS_META_FILE, STATE_KEY, SELECTOR_KEY, INITIAL_SELECTOR_KEY
+from ...constants import CLASS_META_FILE, STATE_KEY, SELECTOR_KEY, INITIAL_SELECTOR_KEY, OUTPUT_KEY
 from ...error import ClippyConfigurationError, ClippyTypeError, ClippyValidationError, ClippyInvalidSelectorError
 from ...utils import flat_dict_to_nested
 
@@ -174,6 +174,9 @@ def _define_method(cls, name: str, executable: str, docstr: str, arguments: list
                 else:
                     raise ClippyTypeError()
 
+        # dump any output
+        if OUTPUT_KEY in outj:
+            print(outj[OUTPUT_KEY])
         # update state according to json output
         if STATE_KEY in outj:
             setattr(self, STATE_KEY, outj[STATE_KEY])
