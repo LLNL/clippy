@@ -19,7 +19,6 @@ def _check_version(output_dict: AnyDict | None) -> bool:
         return False
     if 'version' not in output_dict:
         return False
-    # print(f'{output_dict['version']=}')
     backend_ver = Version.parse(output_dict['version'])
     config_vers = cfg.get('required_versions').split(',')
     return all(backend_ver.match(v.strip()) for v in config_vers)

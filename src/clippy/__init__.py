@@ -1,5 +1,8 @@
-""" Here be dragons. """
+""" This is the clippy initialization file. """
 
+# The general flow is as follows:
+# Create the configurations (see comments in .config for details)
+# Create the logger
 from __future__ import annotations
 
 import logging
@@ -7,13 +10,16 @@ import importlib
 from .config import _clippy_cfg
 from .clippy_types import AnyDict, CLIPPY_CONFIG
 
+
+# Create the main configuraton object and expose it globally.
 cfg = CLIPPY_CONFIG(_clippy_cfg)
+
+# expose for serialization.
 _dynamic_types: AnyDict = {}
 
-# logging.basicConfig()
+# Set up logging
 logfmt = logging.Formatter(cfg.get("logformat"))
 logger = logging.getLogger(cfg.get("logname"))
-
 handler = logging.StreamHandler()
 handler.setFormatter(logfmt)
 logger.addHandler(handler)
@@ -21,6 +27,13 @@ logger.setLevel(cfg.get("loglevel"))
 
 
 def load_classes():
+    '''For each listed backend, import the module of the same name. The
+    backend should expose two functions: a classes() function that returns
+    a dictionary of classes keyed by name, and a get_cfg() function that
+    returns a CLIPPY_CONFIG object with backend-specific configuration.
+    This object is then made an attribute of the global configuration
+    (i.e., `cfg.fs.get('fs_specific_config')`).
+    '''
     for backend in cfg.get("backends"):
         b = importlib.import_module(f'.backends.{backend}', package=__name__)
         setattr(cfg, backend, b.get_cfg())

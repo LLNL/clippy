@@ -14,6 +14,15 @@ from ..clippy_types import AnyDict
 
 
 class Expression(ClippySerializable):
+    '''A clippy expression is a triple of (operation, operand1, operand2) where
+    operation is a string representing an operation (e.g., `"<"` for "less than")
+    and operand1 is a Selector object. Operand2 may be a selector object, or any
+    constant value. It can also be an expression.
+    '''
+
+    # Selectors are currently subclasses of Expression where both op and operand2 are None.
+    # This should probably change.
+
     def __init__(self, op: str | None, o1: Selector, o2: Any):
         super().__init__()
         # if op is None then this expression is just a native Selector held in o1.
@@ -126,6 +135,8 @@ class Expression(ClippySerializable):
 
 
 class Selector(Expression):  # pylint: disable=abstract-method
+    '''A Selector is a subset of `Expression` and represents a single variable.'''
+
     def __init__(self, parent: Selector | None, name: str, docstr: str):
         super().__init__(None, self, None)  # op and o2 are None to represent this as a variable.
         self.parent = parent

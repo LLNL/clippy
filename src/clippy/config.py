@@ -1,4 +1,7 @@
 # pylint: disable=consider-using-namedtuple-or-dataclass
+''' This holds a dictionary containing global configuration variables for clippy.'''
+
+# The format is config_key: (environment variable or None, default value)
 
 import logging
 from .clippy_types import CONFIG_ENTRY
@@ -8,10 +11,6 @@ _clippy_cfg: dict[str, CONFIG_ENTRY] = {
     "backends": ("CLIPPY_BACKENDS", ['fs']),
     # semver version restrictions for the backend
     "required_versions": ("CLIPPY_REQ_VERSIONS", '>=0.2.0, <0.3.0'),
-    # key to json entry that holds reference overrides from backend functions.
-    "reference_key": ("CLIPPY_REFERENCE_KEY", 'references'),
-    # key to json entry that holds return data from backend functions.
-    "return_key": ("CLIPPY_RETURN_KEY", 'returns'),
     # command prefix used to specify clippy task management with the HPC cluster
     # for instance, if using slurm this could be set to 'srun -n1 -ppdebug'
     "cmd_prefix": ("CLIPPY_CMD_PREFIX", ''),

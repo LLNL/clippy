@@ -10,10 +10,17 @@ import os
 from typing import Any, Optional
 from .error import ClippyConfigurationError
 
+# AnyDict is a convenience type so we can find places
+# to be more specific in the future.
 AnyDict = dict[str, Any]
+
+# CONFIG_ENTRY is a convenience type for use in CLIPPY_CONFIG.
 CONFIG_ENTRY = tuple[Optional[str], Any]
 
 
+# CLIPPY_CONFIG holds configuration items for both
+# global settings as well as backend settings.
+# All access to config should be via the `get()` method.
 class CLIPPY_CONFIG:
     def __init__(self, d):
         self._entries = d
@@ -25,11 +32,3 @@ class CLIPPY_CONFIG:
         if env is None:
             return val
         return os.environ.get(env, val)
-
-    def _set(self, field: str, val: CONFIG_ENTRY):
-        self._entries[field] = val
-
-
-# PRIVATE: this dict contains the class types that clippy has constructed.
-#          once constructed clippy will get the definition from this dict
-#          to create new instances.
