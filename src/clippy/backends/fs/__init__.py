@@ -62,6 +62,7 @@ def _create_class(name: str, path: str, topcfg: CLIPPY_CONFIG):
     selectors = meta.pop(INITIAL_SELECTOR_KEY, {})
     meta['_name'] = name
     meta['_path'] = path
+    meta['_cfg'] = topcfg
     class_logger = logging.getLogger(topcfg.get('logname') + '.' + name)
     class_logger.setLevel(topcfg.get('loglevel'))
     meta['logger'] = class_logger
