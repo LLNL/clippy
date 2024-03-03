@@ -1,5 +1,5 @@
+# pylint: disable=consider-using-namedtuple-or-dataclass
 import os
-
 
 _fs_config_entries = {
     # backend path for executables, in addition to the CLIPPY_BACKEND_PATH environment variable. Add to it here.

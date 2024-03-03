@@ -7,12 +7,10 @@
 
 from __future__ import annotations
 import json
-from .serialization import ClippySerializable
-from ..clippy_types import AnyDict
-
-from .. import constants
-
 from typing import Any
+from .serialization import ClippySerializable
+from .. import constants
+from ..clippy_types import AnyDict
 
 
 class Expression(ClippySerializable):
@@ -127,7 +125,7 @@ class Expression(ClippySerializable):
         return {self.op: [o1, o2]}
 
 
-class Selector(Expression):  # pylint: disable=W0223
+class Selector(Expression):  # pylint: disable=abstract-method
     def __init__(self, parent: Selector | None, name: str, docstr: str):
         super().__init__(None, self, None)  # op and o2 are None to represent this as a variable.
         self.parent = parent
@@ -173,7 +171,7 @@ class Selector(Expression):  # pylint: disable=W0223
     def _add_subselector(self, name: str, docstr: str):
         '''add a subselector to this selector'''
         subsel = Selector(self, name, docstr)
-        self.__setattr__(name, subsel)
+        setattr(self, name, subsel)
         self.subselectors.add(subsel)
 
     def _del_subselector(self, name: str):

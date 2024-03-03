@@ -33,7 +33,7 @@ def get_cfg() -> CLIPPY_CONFIG:
 
 
 def classes() -> dict[str, Any]:
-    from ... import cfg as topcfg
+    from ... import cfg as topcfg  # pylint: disable=import-outside-toplevel
 
     paths = cfg.get('fs_backend_paths')
     _classes = {}
@@ -80,7 +80,7 @@ def _create_class(name: str, path: str, topcfg: CLIPPY_CONFIG):
     # add the selectors
     # this should be in the meta.json file.
     for selector, docstr in selectors.items():
-        print(f'adding {selector} to class')
+        class_logger.debug('adding %s to class', selector)
         setattr(cls, selector, Selector(None, selector, docstr))
     return cls
 
@@ -116,7 +116,9 @@ def _process_executable(executable: str, cls):
     return cls
 
 
-def _define_method(cls, name: str, executable: str, docstr: str, arguments: list[str] | None):
+def _define_method(
+    cls, name: str, executable: str, docstr: str, arguments: list[str] | None
+):  # pylint: disable=too-complex
     '''Defines a method on a given class.'''
 
     def m(self, *args, **kwargs):
@@ -124,7 +126,7 @@ def _define_method(cls, name: str, executable: str, docstr: str, arguments: list
         Generic Method that calls an executable with specified arguments
         '''
 
-        from ... import cfg as topcfg
+        from ... import cfg as topcfg  # pylint: disable=import-outside-toplevel
 
         # special cases for __init__
         # call the superclass to initialize the _state

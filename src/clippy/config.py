@@ -1,3 +1,5 @@
+# pylint: disable=consider-using-namedtuple-or-dataclass
+
 import logging
 from .clippy_types import CONFIG_ENTRY
 
@@ -18,7 +20,7 @@ _clippy_cfg: dict[str, CONFIG_ENTRY] = {
     # could be set to 'srun -n1 -ppdebug'
     "validate_cmd_prefix": ("CLIPPY_VALIDATE_CMD_PREFIX", ''),
     # contol the log level of clippy
-    "loglevel": ("CLIPPY_LOG_LEVEL", logging.DEBUG),
+    "loglevel": ("CLIPPY_LOGLEVEL", logging.WARNING),
     "logformat": (
         "CLIPPY_LOGFORMAT",
         '%(asctime)s [%(filename)s:%(lineno)d (%(funcName)s) %(levelname)s: %(message)s',
