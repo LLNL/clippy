@@ -45,7 +45,7 @@ def get_registered_commands(logger, cmd_dict=None):
             logger.debug(f"trying {f}")
             if _is_exe(f):
                 logger.debug(f'running {f} {JSON_FLAG}')
-                cmd = [f, JSON_FLAG]
+                cmd = [validate_cmd_prefix, f, JSON_FLAG]
                 exe = subprocess.run(cmd, capture_output=True)
                 if exe.returncode:
                     logger.warn(f'{f} exited with error code {exe.returncode} - ignoring')
