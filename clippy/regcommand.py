@@ -8,6 +8,7 @@ import json
 import subprocess
 from clippy.error import ClippyConfigurationError
 from clippy.ooclippy import processMemberFunction
+from clippy import config
 
 CLIPPY_ENV = 'CLIPPY_ENV'
 CLIPPY_CFG = '.clippy'
