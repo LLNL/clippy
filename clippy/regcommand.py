@@ -46,7 +46,7 @@ def get_registered_commands(logger, cmd_dict=None):
             if _is_exe(f):
                 logger.debug(f'running {f} {JSON_FLAG}')
                 validate_cmd_prefix = config.validate_cmd_prefix.split()
-                cmd = [validate_cmd_prefix, f, JSON_FLAG]
+                cmd = validate_cmd_prefix + [f, JSON_FLAG]
                 exe = subprocess.run(cmd, capture_output=True)
                 if exe.returncode:
                     logger.warn(f'{f} exited with error code {exe.returncode} - ignoring')
@@ -54,12 +54,12 @@ def get_registered_commands(logger, cmd_dict=None):
                     try:
                         j = json.loads(exe.stdout)
                         ns = namespaces[namespace]
-                                                
+
                         ## test if this is a member function and defer to
                         ## ooclippy if needed
                         if j.get('class_name', None) is not None:
                             processMemberFunction(f, ns, j)
-                        else:  
+                        else:
                             j['exe_name'] = str(f)
                             ns[j['method_name']] = j
                             logger.debug(f'Adding {f} to valid commands under namespace {namespace}')
