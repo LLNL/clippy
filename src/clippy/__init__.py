@@ -1,90 +1,48 @@
-# Copyright 2020 Lawrence Livermore National Security, LLC and other CLIPPy Project Developers.
-# See the top-level COPYRIGHT file for details.
-#
-# SPDX-License-Identifier: MIT
+""" This is the clippy initialization file. """
 
-# TODO: SAB 20240204 finish typing
+# The general flow is as follows:
+# Create the configurations (see comments in .config for details)
+# Create the logger
+from __future__ import annotations
 
-import warnings
-from .clippy import Clippy
-from .clippy import config
-import inspect
-import importlib.metadata
-
-from typing import Any, Dict
-
-# TODO: SAB 20240206 - replace any instances of AnyDict with more specific types.
-AnyDict = Dict[str, Any]
-
-__version__ = importlib.metadata.version("llnl-clippy")
+import logging
+import importlib
+from .config import _clippy_cfg
+from .clippy_types import AnyDict, CLIPPY_CONFIG
 
 
-class ClippyRebindWarning(UserWarning):
-    pass
+# Create the main configuraton object and expose it globally.
+cfg = CLIPPY_CONFIG(_clippy_cfg)
+
+# expose for serialization.
+_dynamic_types: AnyDict = {}
+
+# Set up logging
+logfmt = logging.Formatter(cfg.get("logformat"))
+logger = logging.getLogger(cfg.get("logname"))
+handler = logging.StreamHandler()
+handler.setFormatter(logfmt)
+logger.addHandler(handler)
+logger.setLevel(cfg.get("loglevel"))
 
 
-def clippy_import(backend_path: str, namespace: str = ""):
-    """
-    Imports clippy-wrapped functions into the local python environment.
+def load_classes():
+    '''For each listed backend, import the module of the same name. The
+    backend should expose two functions: a classes() function that returns
+    a dictionary of classes keyed by name, and a get_cfg() function that
+    returns a CLIPPY_CONFIG object with backend-specific configuration.
+    This object is then made an attribute of the global configuration
+    (i.e., `cfg.fs.get('fs_specific_config')`).
+    '''
+    for backend in cfg.get("backends"):
+        b = importlib.import_module(f'.backends.{backend}', package=__name__)
+        setattr(cfg, backend, b.get_cfg())
+        for name, c in b.classes().items():
+            # backend_config = importlib.import_module(f".backends.{name}.config.{name}_config")
+            # for k, v in backend_config.items():
+            #     cfg._set(k, v)
 
-    backend_path is a string file path to a directory containing backend function executables
-
-    example usages include:
-
-    ```
-    # import functions in examples
-    clippy_import("/path/to/examples")
-
-    howdy("seth") # imported from the examples directory and bound locally
-    ```
-
-    ```
-    # import functions in examples into a namespace bound locally
-    clippy_import("/path/to/examples", namespace="examples")
-
-    examples.howdy("Seth")
-    ```
-
-    backend_path: string
-    namespace: string
-    """
-    if namespace:
-        backend_config = {namespace: backend_path}
-    else:
-        backend_config = {str(hash(backend_path)): backend_path}
-
-    c = Clippy(backend_config)
-
-    caller_locals = {}
-    currframe = inspect.currentframe()
-    if currframe is not None and currframe.f_back is not None:
-        caller_locals = currframe.f_back.f_locals
-
-    if namespace:
-        # TODO on subsequent calls to clippy_import we want to
-        #      union the members of the namespace with any existing
-        #      namespace. Currently this only allows a namespace
-        #      (and thus it's members) to be added once.
-        _bind_to_local_environment(caller_locals, c, namespace)
-    else:
-        for ns in backend_config:
-            nsobj = getattr(c, ns)
-            for fn_name in nsobj.methods:
-                _bind_to_local_environment(caller_locals, nsobj, fn_name)
-            for class_name in nsobj.classes:
-                _bind_to_local_environment(caller_locals, nsobj, class_name)
+            globals()[name] = c
 
 
-def _bind_to_local_environment(caller_locals: AnyDict, src_obj, src_name: str):
-    if src_name in caller_locals:
-        warnings.warn(f"{src_name} already exists in local environment, skipping rebind...", ClippyRebindWarning)
-        return
-    caller_locals[src_name] = getattr(src_obj, src_name)
-
-
-__all__ = [
-    'Clippy',
-    'config',
-    'clippy_import',
-    '__version__',
-]
+load_classes()

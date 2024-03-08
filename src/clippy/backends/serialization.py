@@ -1,12 +1,18 @@
-from clippy.error import ClippySerializationError
-from clippy import config, AnyDict
+"""
+    Clippy serialization functions and classes.
+"""
 
-from typing import Any, Dict, List, Optional, Tuple
+from __future__ import annotations
+from typing import Any
+from ..error import ClippySerializationError
+from .. import _dynamic_types
+from ..clippy_types import AnyDict
 
 
 # TODO: SAB 20240204 complete typing here.
 
-class ClippySerializable():
+
+class ClippySerializable:
     """
     Declares the interface for serializing clippy objects. Subclass should inherit from this class to
     be serializable as part of the clippy frontend/backend communication infrustructure.
@@ -34,12 +40,13 @@ class ClippySerializable():
         Subclasses should override this method to provide a custom serialization of the object instance.
         This method should return a python-primitive (dict, list, str, etc) version of the instance state
         """
-        return {"__clippy_type__": {
+        return {
+            "__clippy_type__": {
                 "__module__": self.__class__.__module__,
                 "__class__": self.__class__.__name__,
-                "state": self._state
-                }
-                }
+                "state": self._state,
+            }
+        }
 
     @classmethod
     def from_serial(cls, o: AnyDict):
@@ -52,7 +59,7 @@ class ClippySerializable():
             raise ClippySerializationError("No clippy type detected")
 
         clippy_type = o["__clippy_type__"]
-        assert isinstance(clippy_type, Dict)
+        assert isinstance(clippy_type, dict)
         # right now we aren't using the module but  probably should
         # type_module = clippy_type.get("__module__", None)
         type_name = clippy_type.get("__class__", None)
@@ -61,12 +68,14 @@ class ClippySerializable():
         if type_name is None:
             raise ClippySerializationError("__clippy_type__.__class__ is unspecified")
 
-        if type_name not in config._dynamic_types:
-            raise ClippySerializationError(f"\"{type_name}\" is not a known type, please clippy import it.")
+        if type_name not in _dynamic_types:
+            raise ClippySerializationError(
+                f"\"{type_name}\" is not a known type, please clippy import it."
+            )
 
         # get the type to deserialize into from the _dynamic_types dict
         # this does not account for the module the type may exist in
-        t = config._dynamic_types[type_name]
+        t = _dynamic_types[type_name]
 
         if not issubclass(t, ClippySerializable):
             raise ClippySerializationError(f"\"{type_name}\" is not serializable.")
@@ -84,13 +93,20 @@ class ClippySerializable():
         return instance
 
 
-def _form_method_arguments(method_args: Optional[AnyDict]) -> Tuple[List[Any], AnyDict]:
+def _form_method_arguments(method_args: AnyDict | None) -> tuple[list[Any], AnyDict]:
     if method_args is None:
         return [], {}
 
-    sorted_method_args = sorted([(method_args[arg_name]["position"],
-                                arg_name,
-                                method_args[arg_name]["arg_value"]) for arg_name in method_args])
+    sorted_method_args = sorted(
+        [
+            (
+                method_args[arg_name]["position"],
+                arg_name,
+                method_args[arg_name]["arg_value"],
+            )
+            for arg_name in method_args
+        ]
+    )
     keyword_args = {arg[1]: arg[2] for arg in sorted_method_args if arg[0] == -1}
     positionals = [arg[2] for arg in sorted_method_args if arg[0] > -1]
     return (positionals, keyword_args)
@@ -104,7 +120,7 @@ def encode_clippy_json(o: Any) -> Any:
     #         as expression.py imports ClippySerializable from serialization.py.
     #         rethink this design.
     # PP: question: would it work to have Expression override to_serial?
-    from clippy.expression import Expression
+    from ..expressions import Expression
 
     # PP (04/11/21): note to self: do not change o.to_serial to o.to_json!!
     if isinstance(o, Expression):
