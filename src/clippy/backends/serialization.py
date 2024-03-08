@@ -118,11 +118,11 @@ def encode_clippy_json(o: Any) -> Any:
     #         as expression.py imports ClippySerializable from serialization.py.
     #         rethink this design.
     # PP: question: would it work to have Expression override to_serial?
-    from jsonlogic import Operand
+    from ..selectors import Selector
 
     # PP (04/11/21): note to self: do not change o.to_serial to o.to_json!!
-    if isinstance(o, Operand):  # expression or variable
-        return {"expression_type": "jsonlogic", "rule": o.to_dict()}
+    if isinstance(o, Selector):  # expression or variable
+        return {"expression_type": "jsonlogic", "rule": o.prepare()}
 
     if isinstance(o, ClippySerializable):
         return o.to_serial()
