@@ -22,7 +22,7 @@ from ...error import (
     ClippyValidationError,
     ClippyInvalidSelectorError,
 )
-from ...expressions import Selector
+from jsonlogic import Variable
 from ...utils import flat_dict_to_nested
 
 from ...clippy_types import CLIPPY_CONFIG
@@ -97,7 +97,7 @@ def _create_class(name: str, path: str, topcfg: CLIPPY_CONFIG):
     # this should be in the meta.json file.
     for selector, docstr in selectors.items():
         class_logger.debug('adding %s to class', selector)
-        setattr(cls, selector, Selector(None, selector, docstr))
+        setattr(cls, selector, Variable(selector, docstr))
     return cls
 
 
