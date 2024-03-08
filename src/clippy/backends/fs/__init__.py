@@ -203,7 +203,9 @@ def _define_method(
             d = flat_dict_to_nested(outj[constants.SELECTOR_KEY])
             for topsel, subsels in d.items():
                 if not hasattr(self, topsel):
-                    raise ClippyInvalidSelectorError(f'selector {topsel} not found in class; aborting')
+                    raise ClippyInvalidSelectorError(
+                        f'selector {topsel} not found in class; aborting'
+                    )
                 getattr(self, topsel)._import_from_dict(subsels)
 
         # return result
