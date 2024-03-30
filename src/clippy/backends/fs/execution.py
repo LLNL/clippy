@@ -8,7 +8,7 @@ import logging
 import subprocess
 from ...clippy_types import AnyDict
 from ... import cfg
-from ...constants import OUTPUT_KEY, RETURN_KEY
+from ...constants import OUTPUT_KEY
 from .constants import (
     DRY_RUN_FLAG,
     HELP_FLAG,
