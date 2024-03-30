@@ -118,17 +118,14 @@ def _process_executable(executable: str, cls):
     except CalledProcessError as e:
         raise ClippyConfigurationError("Execution error " + e.stderr) from e
 
-    # check to make sure we have the method name. This is so the executable can have
-    # a different name than the actual method.
-    if constants.METHODNAME_KEY not in j:
-        raise ClippyConfigurationError("No method_name in " + executable)
     # check version
     if not _check_version(j):
         raise ClippyConfigurationError("Invalid version information in " + executable)
 
     docstring = j.get(constants.DOCSTRING_KEY, "")
     args = j.get(constants.ARGS_KEY, {})
-    method = j[constants.METHODNAME_KEY]
+    # if we don't explicitly pass the method name, use the name of the exe.
+    method = j.get(constants.METHODNAME_KEY, os.path.basename(executable))
     _define_method(cls, method, executable, docstring, args)
     return cls
 
@@ -203,9 +200,7 @@ def _define_method(
             d = flat_dict_to_nested(outj[constants.SELECTOR_KEY])
             for topsel, subsels in d.items():
                 if not hasattr(self, topsel):
-                    raise ClippyInvalidSelectorError(
-                        f'selector {topsel} not found in class; aborting'
-                    )
+                    raise ClippyInvalidSelectorError(f'selector {topsel} not found in class; aborting')
                 getattr(self, topsel)._import_from_dict(subsels)
 
         # return result

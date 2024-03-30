@@ -66,7 +66,8 @@ def _stream_exec(
         assert proc.stderr is not None
 
         proc.stdin.write(cmd_stdin + "\n")
-        proc.stdin.close()
+        proc.stdin.flush()
+        # proc.stdin.close()
         it = iter(proc.stdout.readline, '')
         progress = None
         for line in it:
@@ -103,9 +104,9 @@ def _stream_exec(
 
     if not d:
         return None, stderr
-    if stderr is not None:
-        logger.warning('Received stderr: %s', stderr)
-    logger.warning('run(): final stdout = %s', d)
+    if stderr:
+        logger.debug('Received stderr: %s', stderr)
+    logger.debug('run(): final stdout = %s', d)
 
     return (d.get(RETURN_KEY), stderr)
 
