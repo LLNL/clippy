@@ -5,18 +5,37 @@
 from __future__ import annotations
 import json
 import logging
-from subprocess import run, CompletedProcess
+import subprocess
 from ...clippy_types import AnyDict
 from ... import cfg
-from .constants import DRY_RUN_FLAG, HELP_FLAG
+from ...constants import OUTPUT_KEY
+from .constants import (
+    DRY_RUN_FLAG,
+    HELP_FLAG,
+    PROGRESS_INC_KEY,
+    PROGRESS_SET_KEY,
+    PROGRESS_START_KEY,
+    PROGRESS_END_KEY,
+)
+
 
 from ...error import ClippyValidationError, ClippyBackendError
 from ..serialization import encode_clippy_json, decode_clippy_json
 
+try:
+    from tqdm import tqdm
 
-def _exec(
-    cmd: list[str], submission_dict: AnyDict, logger: logging.Logger
-) -> CompletedProcess:
+    _has_tqdm = True
+except ImportError:
+    _has_tqdm = False
+
+
+def _stream_exec(
+    cmd: list[str],
+    submission_dict: AnyDict,
+    logger: logging.Logger,
+    validate: bool,
+) -> tuple[AnyDict | None, str | None]:
     '''
     Internal function.
 
@@ -24,6 +43,7 @@ def _exec(
     passes `submission_dict` as JSON via STDIN.
 
     Logs debug messages with progress.
+    Parses the object and returns a dictionary output.
     Returns the process result object.
 
     This function is used by _run and _validate. All options (pre_cmd and flags) should
@@ -36,43 +56,62 @@ def _exec(
     cmd_stdin = json.dumps(submission_dict, default=encode_clippy_json)
 
     logger.debug('Calling %s with input %s', cmd, cmd_stdin)
-    p = run(cmd, input=cmd_stdin, capture_output=True, encoding='utf-8', check=False)
-    logger.debug('run(): result = %s', p)
+    d = {}
+    stderr = None
+    with subprocess.Popen(
+        cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8'
+    ) as proc:
+        assert proc.stdin is not None
+        assert proc.stdout is not None
+        assert proc.stderr is not None
 
-    return p
+        proc.stdin.write(cmd_stdin + "\n")
+        proc.stdin.flush()
+        # proc.stdin.close()
+        it = iter(proc.stdout.readline, '')
+        progress = None
+        for line in it:
+            d = json.loads(line, object_hook=decode_clippy_json)
+            if proc.poll() is not None:  # process terminated; this shouldn't normally happen.
+                break
+            if _has_tqdm:
+                if progress is None:
+                    if PROGRESS_START_KEY in d:
+                        progress = tqdm() if d[PROGRESS_START_KEY] is None else tqdm(total=d[PROGRESS_START_KEY])
+                        # print(f"start, total = {d[PROGRESS_START_KEY]}, {progress.n=}")
+                else:
+                    if PROGRESS_INC_KEY in d:
+                        progress.update(d[PROGRESS_INC_KEY])
+                        progress.refresh()
+                        # print(f"update {progress.n=}")
+                    if PROGRESS_SET_KEY in d:
+                        progress.n = d[PROGRESS_SET_KEY]
+                        progress.refresh()
+                    if PROGRESS_END_KEY in d:
+                        progress.close()
+                        # print("close")
+                        progress = None
+            if progress is None:
+                if OUTPUT_KEY in d:
+                    print(d[OUTPUT_KEY])
+
+        if proc.stderr is not None:
+            stderr = "".join(proc.stderr.readlines())
+    if progress is not None:
+        progress.close()
+    if proc.returncode:
+        raise (ClippyValidationError(stderr) if validate else ClippyBackendError(stderr))
+
+    if not d:
+        return None, stderr
+    if stderr:
+        logger.debug('Received stderr: %s', stderr)
+    logger.debug('run(): final stdout = %s', d)
+
+    return (d, stderr)
 
 
-def _parse(
-    p: CompletedProcess, logger: logging.Logger, validate: bool
-) -> tuple[AnyDict | None, str | None]:
-    '''Given a CompletedProcess, process the output. Returns JSON dict
-    from stdout and any stderr that has been generated.'''
-    if p.returncode:
-        raise (
-            ClippyValidationError(p.stderr)
-            if validate
-            else ClippyBackendError(p.stderr)
-        )
-
-    if p.stderr:  # we have something on stderr, which is generally not good.
-        logger.warning('Received stderr: %s', p.stderr)
-    if not p.stdout:
-        return None, p.stderr
-    logger.debug('Received stdout: %s', p.stdout)
-    return json.loads(p.stdout, object_hook=decode_clippy_json), p.stderr
-
-
-def _exec_and_parse(
-    cmd: list[str], submission_dict: AnyDict, logger: logging.Logger, validate: bool
-) -> tuple[AnyDict | None, str | None]:
-    '''Internal function. Calls _exec and _parse'''
-    p = _exec(cmd, submission_dict, logger)
-    return _parse(p, logger, validate)
-
-
-def _validate(
-    cmd: str | list[str], dct: AnyDict, logger: logging.Logger
-) -> tuple[bool, str]:
+def _validate(cmd: str | list[str], dct: AnyDict, logger: logging.Logger) -> tuple[bool, str]:
     '''
     Converts the dictionary dct into a json file and calls executable cmd with the DRY_RUN_FLAG.
     Returns True/False (validation successful) and any stderr.
@@ -83,7 +122,7 @@ def _validate(
 
     execcmd = cfg.get('validate_cmd_prefix').split() + cmd + [DRY_RUN_FLAG]
     logger.debug('Validating %s', cmd)
-    _, stderr = _exec_and_parse(execcmd, dct, logger, validate=True)
+    _, stderr = _stream_exec(execcmd, dct, logger, validate=True)
     return stderr is not None, stderr or ''
 
 
@@ -98,7 +137,7 @@ def _run(cmd: str | list[str], dct: AnyDict, logger: logging.Logger) -> AnyDict:
     execcmd = cfg.get('cmd_prefix').split() + cmd
     logger.debug('Running %s', execcmd)
     # should we do something with stderr?
-    output, _ = _exec_and_parse(execcmd, dct, logger, validate=False)
+    output, _ = _stream_exec(execcmd, dct, logger, validate=False)
 
     return output or {}
 
@@ -114,6 +153,6 @@ def _help(cmd: str | list[str], dct: AnyDict, logger: logging.Logger) -> AnyDict
     execcmd = cfg.get('validate_cmd_prefix').split() + cmd + [HELP_FLAG]
     logger.debug('Running %s', execcmd)
     # should we do something with stderr?
-    output, _ = _exec_and_parse(execcmd, dct, logger, validate=True)
+    output, _ = _stream_exec(execcmd, dct, logger, validate=True)
 
     return output or {}

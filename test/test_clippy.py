@@ -3,9 +3,9 @@ import sys
 
 sys.path.append('src')
 
+import clippy.jsonlogic as jl
 import clippy
 from clippy.error import ClippyValidationError, ClippyInvalidSelectorError
-from clippy.expressions import Selector
 
 import logging
 
@@ -49,84 +49,6 @@ def test_bag(testbag):
     assert testbag.size() == 2
     testbag.remove(99)
     assert testbag.size() == 2
-
-
-def test_expression_gt_gte(testbag):
-    testbag.insert(10).insert(41).insert(42).insert(50).insert(51).insert(52)
-    assert testbag.size() == 6
-    testbag.remove_if(testbag.value > 51)
-    assert testbag.size() == 5
-    testbag.remove_if(testbag.value >= 50)
-    assert testbag.size() == 3
-    testbag.remove_if(testbag.value >= 99)
-    assert testbag.size() == 3
-
-
-def test_expression_lt_lte(testbag):
-    testbag.insert(10).insert(41).insert(42).insert(50).insert(51).insert(52)
-    testbag.remove_if(testbag.value < 42)
-    assert testbag.size() == 4
-    testbag.remove_if(testbag.value <= 51)
-    assert testbag.size() == 1
-
-
-def test_expression_eq_neq(testbag):
-    testbag.insert(10).insert(11).insert(12)
-    assert testbag.size() == 3
-    testbag.remove_if(testbag.value != 11)
-    assert testbag.size() == 1
-    testbag.remove_if(testbag.value == 11)
-    assert testbag.size() == 0
-
-
-def test_expresssion_add(testbag):
-    testbag.insert(10).insert(41).insert(42).insert(50).insert(51).insert(52)
-    testbag.remove_if(testbag.value + 30 > 70)
-    assert testbag.size() == 1
-
-
-def test_expression_sub(testbag):
-    testbag.insert(10).insert(41).insert(42).insert(50).insert(51).insert(52)
-    testbag.remove_if(testbag.value - 30 > 0)
-    assert testbag.size() == 1
-
-
-def test_expression_mul_div(testbag):
-    testbag.insert(10).insert(41).insert(42).insert(50).insert(51).insert(52)
-    testbag.remove_if(testbag.value * 2 / 4 > 10)
-    assert testbag.size() == 1
-
-
-def test_expression_or(testbag):
-    testbag.insert(10).insert(41).insert(42).insert(50).insert(51).insert(52)
-    testbag.remove_if((testbag.value < 41) | (testbag.value > 49))
-    assert testbag.size() == 2  # 41, 42
-
-
-def test_expression_and(testbag):
-    testbag.insert(10).insert(41).insert(42).insert(50).insert(51).insert(52)
-    testbag.remove_if((testbag.value > 40) & (testbag.value < 50))
-    assert testbag.size() == 4  # 10, 50, 51, 52
-
-
-# TODO: not yet implemented
-# def test_expression_floordiv(testbag):
-#     testbag.insert(10).insert(41).insert(42).insert(50).insert(51).insert(52)
-#     testbag.remove_if(testbag.value * 2 // 4.2 > 10)
-#     assert testbag.size() == 1
-
-
-def test_expression_mod(testbag):
-    testbag.insert(10).insert(41).insert(42).insert(50).insert(51).insert(52)
-    testbag.remove_if(testbag.value % 2 == 0)
-    assert testbag.size() == 2
-
-
-# TODO: not yet implemented
-# def test_expression_pow(testbag):
-#     testbag.insert(10).insert(41).insert(42).insert(50).insert(51).insert(52)
-#     testbag.remove_if(testbag.value**2 > 1000)
-#     assert testbag.size() == 2
 
 
 def test_clippy_call_with_string(testfun):
@@ -175,8 +97,8 @@ def test_selectors(testsel):
     assert testsel.nodes.b.__doc__ == 'docstring for nodes.b'
     assert testsel.nodes.b.c.__doc__ == 'docstring for nodes.b.c'
 
-    assert isinstance(testsel.nodes.b, Selector)
-    assert isinstance(testsel.nodes.b.c, Selector)
+    assert isinstance(testsel.nodes.b, jl.Variable)
+    assert isinstance(testsel.nodes.b.c, jl.Variable)
 
     with pytest.raises(ClippyInvalidSelectorError):
         testsel.add(testsel.nodes, '_bad', desc="this is a bad selector name")

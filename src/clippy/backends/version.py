@@ -15,6 +15,8 @@ def _check_version(output_dict: AnyDict | None) -> bool:
     false otherwise. If no version is found, return false.
     '''
 
+    # TODO 20240330: remove the following when we get versioning into cpp
+    return True
     if output_dict is None:
         return False
     if 'version' not in output_dict:
