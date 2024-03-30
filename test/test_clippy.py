@@ -3,7 +3,7 @@ import sys
 
 sys.path.append('src')
 
-import jsonlogic as jl
+import clippy.jsonlogic as jl
 import clippy
 from clippy.error import ClippyValidationError, ClippyInvalidSelectorError
 

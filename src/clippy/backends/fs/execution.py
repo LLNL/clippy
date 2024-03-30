@@ -108,7 +108,7 @@ def _stream_exec(
         logger.debug('Received stderr: %s', stderr)
     logger.debug('run(): final stdout = %s', d)
 
-    return (d.get(RETURN_KEY), stderr)
+    return (d, stderr)
 
 
 def _validate(cmd: str | list[str], dct: AnyDict, logger: logging.Logger) -> tuple[bool, str]:

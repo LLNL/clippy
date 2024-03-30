@@ -126,6 +126,8 @@ def _process_executable(executable: str, cls):
     args = j.get(constants.ARGS_KEY, {})
     # if we don't explicitly pass the method name, use the name of the exe.
     method = j.get(constants.METHODNAME_KEY, os.path.basename(executable))
+    if hasattr(cls, method) and not method.startswith("__"):
+        cls.logger.warning(f'Overwriting existing method {method} for class {cls} with executable {executable}')
     _define_method(cls, method, executable, docstring, args)
     return cls
 
