@@ -1,9 +1,9 @@
 import pytest
 import sys
 
-sys.path.append('src')
+sys.path.append("src")
 
-import clippy.jsonlogic as jl
+import jsonlogic as jl
 import clippy
 from clippy.error import ClippyValidationError, ClippyInvalidSelectorError
 
@@ -52,7 +52,7 @@ def test_bag(testbag):
 
 
 def test_clippy_call_with_string(testfun):
-    assert testfun.call_with_string('Seth') == 'Howdy, Seth'
+    assert testfun.call_with_string("Seth") == "Howdy, Seth"
     with pytest.raises(ClippyValidationError):
         testfun.call_with_string()
 
@@ -62,7 +62,7 @@ def test_clippy_returns_int(testfun):
 
 
 def test_clippy_returns_string(testfun):
-    assert testfun.returns_string() == 'asdf'
+    assert testfun.returns_string() == "asdf"
 
 
 def test_clippy_returns_bool(testfun):
@@ -72,9 +72,9 @@ def test_clippy_returns_bool(testfun):
 def test_clippy_returns_dict(testfun):
     d = testfun.returns_dict()
     assert len(d) == 3
-    assert d.get('a') == 1
-    assert d.get('b') == 2
-    assert d.get('c') == 3
+    assert d.get("a") == 1
+    assert d.get("b") == 2
+    assert d.get("c") == 3
 
 
 def test_clippy_returns_vec_int(testfun):
@@ -82,26 +82,26 @@ def test_clippy_returns_vec_int(testfun):
 
 
 def test_clippy_returns_optional_string(testfun):
-    assert testfun.call_with_optional_string() == 'Howdy, World'
-    assert testfun.call_with_optional_string(name='Seth') == 'Howdy, Seth'
+    assert testfun.call_with_optional_string() == "Howdy, World"
+    assert testfun.call_with_optional_string(name="Seth") == "Howdy, Seth"
 
 
 def test_selectors(testsel):
-    assert hasattr(testsel, 'nodes')
+    assert hasattr(testsel, "nodes")
 
-    testsel.add(testsel.nodes, 'b', desc='docstring for nodes.b').add(
-        testsel.nodes.b, 'c', desc='docstring for nodes.b.c'
+    testsel.add(testsel.nodes, "b", desc="docstring for nodes.b").add(
+        testsel.nodes.b, "c", desc="docstring for nodes.b.c"
     )
-    assert hasattr(testsel.nodes, 'b')
-    assert hasattr(testsel.nodes.b, 'c')
-    assert testsel.nodes.b.__doc__ == 'docstring for nodes.b'
-    assert testsel.nodes.b.c.__doc__ == 'docstring for nodes.b.c'
+    assert hasattr(testsel.nodes, "b")
+    assert hasattr(testsel.nodes.b, "c")
+    assert testsel.nodes.b.__doc__ == "docstring for nodes.b"
+    assert testsel.nodes.b.c.__doc__ == "docstring for nodes.b.c"
 
     assert isinstance(testsel.nodes.b, jl.Variable)
     assert isinstance(testsel.nodes.b.c, jl.Variable)
 
     with pytest.raises(ClippyInvalidSelectorError):
-        testsel.add(testsel.nodes, '_bad', desc="this is a bad selector name")
+        testsel.add(testsel.nodes, "_bad", desc="this is a bad selector name")
 
     # with pytest.raises(ClippyInvalidSelectorError):
     #     testsel.add(testsel, 'bad', desc="this is a top-level selector")
