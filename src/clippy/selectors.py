@@ -1,4 +1,4 @@
-""" Custom selectors for clippy. """
+"""Custom selectors for clippy."""
 
 from __future__ import annotations
 import jsonlogic as jl

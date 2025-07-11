@@ -51,7 +51,6 @@ def test_bag(testbag):
     assert testbag.size() == 2
 
 
-
 def test_clippy_call_with_string(testfun):
     assert testfun.call_with_string("Seth") == "Howdy, Seth"
     with pytest.raises(ClippyValidationError):
@@ -134,7 +133,6 @@ def test_expression_mod(testbag):
 #     testbag.insert(10).insert(41).insert(42).insert(50).insert(51).insert(52)
 #     testbag.remove_if(testbag.value**2 > 1000)
 #     assert testbag.size() == 2
-
 
 
 def test_clippy_returns_int(testfun):

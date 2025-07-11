@@ -1,5 +1,5 @@
 """
-    Clippy serialization functions and classes.
+Clippy serialization functions and classes.
 """
 
 from __future__ import annotations
@@ -72,7 +72,7 @@ class ClippySerializable:
 
         if type_name not in _dynamic_types:
             raise ClippySerializationError(
-                f"\"{type_name}\" is not a known type, please clippy import it."
+                f'"{type_name}" is not a known type, please clippy import it.'
             )
 
         # get the type to deserialize into from the _dynamic_types dict
@@ -80,7 +80,7 @@ class ClippySerializable:
         t = _dynamic_types[type_name]
 
         if not issubclass(t, ClippySerializable):
-            raise ClippySerializationError(f"\"{type_name}\" is not serializable.")
+            raise ClippySerializationError(f'"{type_name}" is not serializable.')
 
         # create an instance of the clippy type but avoid initializing it
         # because it may have required args we don't care about.
