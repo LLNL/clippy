@@ -11,7 +11,9 @@ authors = [
 description="A Python interface to HPC resources"
 readme = "README.md"
 dynamic = ["dependencies", "optional-dependencies"]
-requires-python = ">=3.9"
+
+requires-python = ">=3.10"
+
 classifiers = [
         "Development Status :: 3 - Alpha",
         "Programming Language :: Python :: 3",

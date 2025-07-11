@@ -3,9 +3,11 @@
 """
 
 from __future__ import annotations
+import jsonlogic
 from typing import Any
 from ..error import ClippySerializationError
 from .. import _dynamic_types
+from ..selectors import Selector
 from ..clippy_types import AnyDict
 
 
@@ -116,15 +118,10 @@ def encode_clippy_json(o: Any) -> Any:
     """
     json encoder that is clippy-object aware.
     """
-    # FIXME - this works but we are close to creating a circular dependancy here
-    #         as expression.py imports ClippySerializable from serialization.py.
-    #         rethink this design.
-    # PP: question: would it work to have Expression override to_serial?
-    from ..expressions import Expression
-
-    # PP (04/11/21): note to self: do not change o.to_serial to o.to_json!!
-    if isinstance(o, Expression):
-        return {"expression_type": "jsonlogic", "rule": o.to_serial()}
+    if isinstance(o, jsonlogic.Expression) or isinstance(
+        o, Selector
+    ):  # expression or variable
+        return {"expression_type": "jsonlogic", "rule": o.prepare()}
 
     if isinstance(o, ClippySerializable):
         return o.to_serial()

@@ -16,7 +16,7 @@ SELECTOR_KEY = '_selectors'
 # Any internal state kept in the Python frontend.
 STATE_KEY = '_state'
 # This will reference a string to be printed to stdout by the frontend.
-OUTPUT_KEY = '_output'
+OUTPUT_KEY = 'stdout'
 # This key is a boolean - if true, return self (to enable method chaining).
 SELF_KEY = 'returns_self'
 # key to json entry that holds reference overrides from backend functions.

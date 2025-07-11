@@ -14,7 +14,6 @@ def _check_version(output_dict: AnyDict | None) -> bool:
     Return true if version is compatible with version range set in config,
     false otherwise. If no version is found, return false.
     '''
-
     if output_dict is None:
         return False
     if 'version' not in output_dict:
