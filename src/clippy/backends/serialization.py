@@ -3,6 +3,7 @@
 """
 
 from __future__ import annotations
+import jsonlogic
 from typing import Any
 from ..error import ClippySerializationError
 from .. import _dynamic_types
@@ -117,7 +118,7 @@ def encode_clippy_json(o: Any) -> Any:
     """
     json encoder that is clippy-object aware.
     """
-    if isinstance(o, Selector):  # expression or variable
+    if isinstance(o, jsonlogic.Expression):  # expression or variable
         return {"expression_type": "jsonlogic", "rule": o.prepare()}
 
     if isinstance(o, ClippySerializable):
