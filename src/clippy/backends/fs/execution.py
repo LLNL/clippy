@@ -5,7 +5,6 @@
 from __future__ import annotations
 import json
 import logging
-<<<<<<< HEAD
 
 import subprocess
 from ...clippy_types import AnyDict
@@ -19,17 +18,10 @@ from .constants import (
     PROGRESS_START_KEY,
     PROGRESS_END_KEY,
 )
-=======
-from subprocess import run, CompletedProcess
-from ...clippy_types import AnyDict
-from ... import cfg
-from .constants import DRY_RUN_FLAG, HELP_FLAG
->>>>>>> 7cdf107e6908b75850182f2b637804bd69d2c336
 
 from ...error import ClippyValidationError, ClippyBackendError
 from ..serialization import encode_clippy_json, decode_clippy_json
 
-<<<<<<< HEAD
 try:
     from tqdm import tqdm
 
@@ -44,36 +36,26 @@ def _stream_exec(
     logger: logging.Logger,
     validate: bool,
 ) -> tuple[AnyDict | None, str | None]:
-=======
-
-def _exec(
-    cmd: list[str], submission_dict: AnyDict, logger: logging.Logger
-) -> CompletedProcess:
->>>>>>> 7cdf107e6908b75850182f2b637804bd69d2c336
-    '''
+    """
     Internal function.
 
     Executes the command specified with `execcmd` and
     passes `submission_dict` as JSON via STDIN.
 
     Logs debug messages with progress.
-<<<<<<< HEAD
     Parses the object and returns a dictionary output.
-=======
->>>>>>> 7cdf107e6908b75850182f2b637804bd69d2c336
     Returns the process result object.
 
     This function is used by _run and _validate. All options (pre_cmd and flags) should
     already be set.
-    '''
+    """
 
     logger.debug(f'Submission = {submission_dict}')
     # PP support passing objects
     # ~ cmd_stdin = json.dumps(submission_dict)
     cmd_stdin = json.dumps(submission_dict, default=encode_clippy_json)
 
-    logger.debug('Calling %s with input %s', cmd, cmd_stdin)
-<<<<<<< HEAD
+    logger.debug("Calling %s with input %s", cmd, cmd_stdin)
 
     d = {}
     stderr = None
@@ -130,46 +112,9 @@ def _exec(
     return (d, stderr)
 
 
-def _validate(cmd: str | list[str], dct: AnyDict, logger: logging.Logger) -> tuple[bool, str]:
-=======
-    p = run(cmd, input=cmd_stdin, capture_output=True, encoding='utf-8', check=False)
-    logger.debug('run(): result = %s', p)
-
-    return p
-
-
-def _parse(
-    p: CompletedProcess, logger: logging.Logger, validate: bool
-) -> tuple[AnyDict | None, str | None]:
-    '''Given a CompletedProcess, process the output. Returns JSON dict
-    from stdout and any stderr that has been generated.'''
-    if p.returncode:
-        raise (
-            ClippyValidationError(p.stderr)
-            if validate
-            else ClippyBackendError(p.stderr)
-        )
-
-    if p.stderr:  # we have something on stderr, which is generally not good.
-        logger.warning('Received stderr: %s', p.stderr)
-    if not p.stdout:
-        return None, p.stderr
-    logger.debug('Received stdout: %s', p.stdout)
-    return json.loads(p.stdout, object_hook=decode_clippy_json), p.stderr
-
-
-def _exec_and_parse(
-    cmd: list[str], submission_dict: AnyDict, logger: logging.Logger, validate: bool
-) -> tuple[AnyDict | None, str | None]:
-    '''Internal function. Calls _exec and _parse'''
-    p = _exec(cmd, submission_dict, logger)
-    return _parse(p, logger, validate)
-
-
 def _validate(
     cmd: str | list[str], dct: AnyDict, logger: logging.Logger
 ) -> tuple[bool, str]:
->>>>>>> 7cdf107e6908b75850182f2b637804bd69d2c336
     '''
     Converts the dictionary dct into a json file and calls executable cmd with the DRY_RUN_FLAG.
     Returns True/False (validation successful) and any stderr.
@@ -179,13 +124,9 @@ def _validate(
         cmd = [cmd]
 
     execcmd = cfg.get('validate_cmd_prefix').split() + cmd + [DRY_RUN_FLAG]
-    logger.debug('Validating %s', cmd)
-<<<<<<< HEAD
+    logger.debug("Validating %s", cmd)
 
     _, stderr = _stream_exec(execcmd, dct, logger, validate=True)
-=======
-    _, stderr = _exec_and_parse(execcmd, dct, logger, validate=True)
->>>>>>> 7cdf107e6908b75850182f2b637804bd69d2c336
     return stderr is not None, stderr or ''
 
 
@@ -200,13 +141,8 @@ def _run(cmd: str | list[str], dct: AnyDict, logger: logging.Logger) -> AnyDict:
     execcmd = cfg.get('cmd_prefix').split() + cmd
     logger.debug('Running %s', execcmd)
     # should we do something with stderr?
-<<<<<<< HEAD
 
     output, _ = _stream_exec(execcmd, dct, logger, validate=False)
-=======
-    output, _ = _exec_and_parse(execcmd, dct, logger, validate=False)
-
->>>>>>> 7cdf107e6908b75850182f2b637804bd69d2c336
     return output or {}
 
 
@@ -221,11 +157,6 @@ def _help(cmd: str | list[str], dct: AnyDict, logger: logging.Logger) -> AnyDict
     execcmd = cfg.get('validate_cmd_prefix').split() + cmd + [HELP_FLAG]
     logger.debug('Running %s', execcmd)
     # should we do something with stderr?
-<<<<<<< HEAD
 
     output, _ = _stream_exec(execcmd, dct, logger, validate=True)
-=======
-    output, _ = _exec_and_parse(execcmd, dct, logger, validate=True)
-
->>>>>>> 7cdf107e6908b75850182f2b637804bd69d2c336
     return output or {}

@@ -4,24 +4,16 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "llnl-clippy"
-<<<<<<< HEAD
 version = "0.3.1"
-=======
-version = "0.2-dev"
->>>>>>> 7cdf107e6908b75850182f2b637804bd69d2c336
 authors = [
   { name="Roger Pearce"}, { name="Seth Bromberger"}
 ]
 description="A Python interface to HPC resources"
 readme = "README.md"
 dynamic = ["dependencies", "optional-dependencies"]
-<<<<<<< HEAD
 
 requires-python = ">=3.10"
 
-=======
-requires-python = ">=3.9"
->>>>>>> 7cdf107e6908b75850182f2b637804bd69d2c336
 classifiers = [
         "Development Status :: 3 - Alpha",
         "Programming Language :: Python :: 3",
