@@ -1,4 +1,4 @@
-""" Custom selectors for clippy. """
+"""Custom selectors for clippy."""
 
 from __future__ import annotations
 import jsonlogic as jl
@@ -8,7 +8,7 @@ from .clippy_types import AnyDict
 
 
 class Selector(jl.Variable):
-    """A Selector is a subset of `Expression` and represents a single variable."""
+    """A Selector represents a single variable."""
 
     def __init__(self, parent: Selector | None, name: str, docstr: str):
         super().__init__(

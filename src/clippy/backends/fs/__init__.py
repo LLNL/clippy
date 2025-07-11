@@ -1,4 +1,4 @@
-""" Filesystem backend for clippy. """
+"""Filesystem backend for clippy."""
 
 from __future__ import annotations
 
@@ -23,7 +23,6 @@ from ...error import (
     ClippyValidationError,
     ClippyInvalidSelectorError,
 )
-
 from ...selectors import Selector
 from ...utils import flat_dict_to_nested
 
@@ -60,16 +59,16 @@ def _is_user_executable(path: pathlib.Path) -> bool:
 
 
 def get_cfg() -> CLIPPY_CONFIG:
-    '''This is a mandatory function for all backends. It returns the backend-specific configuration.'''
+    """This is a mandatory function for all backends. It returns the backend-specific configuration."""
     return cfg
 
 
 def classes() -> dict[str, Any]:
-    '''This is a mandatory function for all backends. It returns a dictionary of class name
-    to the actual Class for all classes supported by the backend.'''
+    """This is a mandatory function for all backends. It returns a dictionary of class name
+    to the actual Class for all classes supported by the backend."""
     from ... import cfg as topcfg  # pylint: disable=import-outside-toplevel
 
-    paths = cfg.get('fs_backend_paths')
+    paths = cfg.get("fs_backend_paths")
     _classes = {}
     # iterate over all (filesystem) paths and for those that aren't explicitly excluded,
     # create the class based on the directory name and add methods based on the executables
@@ -77,7 +76,7 @@ def classes() -> dict[str, Any]:
     for path in paths:
         files = os.scandir(path)
         for f in files:
-            if f.name in cfg.get('fs_exclude_paths'):
+            if f.name in cfg.get("fs_exclude_paths"):
                 continue
             p = pathlib.Path(path, f)
             if os.path.isdir(p):
@@ -87,26 +86,26 @@ def classes() -> dict[str, Any]:
 
 
 def _create_class(name: str, path: str, topcfg: CLIPPY_CONFIG):
-    '''Given a name, a path, and a master configuration, create
+    """Given a name, a path, and a master configuration, create
     a class with the given name, and add methods based on the
     executable files within the class. Set convenience fields
     (_name, _path, _cfg) as well, and load class metadata from
     a meta.json file in each class directory. The meta.json
     file typically holds the class's docstring and any initial
-    top-level selectors as a dictionary of selector: docstring.'''
+    top-level selectors as a dictionary of selector: docstring."""
     metafile = pathlib.Path(path, name, constants.CLASS_META_FILE)
     meta = {}
     if metafile.exists():
-        with open(metafile, 'r', encoding='utf-8') as json_file:
+        with open(metafile, "r", encoding="utf-8") as json_file:
             meta = json.load(json_file)
     # pull the selectors out since we don't want them in the class definition right now
     selectors = meta.pop(constants.INITIAL_SELECTOR_KEY, {})
-    meta['_name'] = name
-    meta['_path'] = path
-    meta['_cfg'] = topcfg
-    class_logger = logging.getLogger(topcfg.get('logname') + '.' + name)
-    class_logger.setLevel(topcfg.get('loglevel'))
-    meta['logger'] = class_logger
+    meta["_name"] = name
+    meta["_path"] = path
+    meta["_cfg"] = topcfg
+    class_logger = logging.getLogger(topcfg.get("logname") + "." + name)
+    class_logger.setLevel(topcfg.get("loglevel"))
+    meta["logger"] = class_logger
 
     cls = type(name, (ClippySerializable,), meta)
     classpath = pathlib.Path(path, name)
@@ -121,22 +120,22 @@ def _create_class(name: str, path: str, topcfg: CLIPPY_CONFIG):
     # add the selectors
     # this should be in the meta.json file.
     for selector, docstr in selectors.items():
-        class_logger.debug('adding %s to class', selector)
+        class_logger.debug("adding %s to class", selector)
         setattr(cls, selector, Selector(None, selector, docstr))
     return cls
 
 
 def _process_executable(executable: str, cls):
-    '''
+    """
     Stores the executable as a method of cls.
     details: The executable is queried for its description. The returned
              json file is parsed and converted to a type representing
              the executable's methods and state. The type is recorded in the
              symtable (by default globals()).
-    '''
+    """
 
     # grab the help string, which gives us the docstring and  all arguments.
-    cls.logger.debug('processing executable %s', executable)
+    cls.logger.debug("processing executable %s", executable)
     try:
         j = _help(executable, {}, cls.logger)
 
@@ -147,7 +146,6 @@ def _process_executable(executable: str, cls):
     # a different name than the actual method.
     if constants.METHODNAME_KEY not in j:
         raise ClippyConfigurationError("No method_name in " + executable)
-
     # check version
     if not _check_version(j):
         raise ClippyConfigurationError("Invalid version information in " + executable)
@@ -158,7 +156,9 @@ def _process_executable(executable: str, cls):
     # if we don't explicitly pass the method name, use the name of the exe.
     method = j.get(constants.METHODNAME_KEY, os.path.basename(executable))
     if hasattr(cls, method) and not method.startswith("__"):
-        cls.logger.warning(f'Overwriting existing method {method} for class {cls} with executable {executable}')
+        cls.logger.warning(
+            f"Overwriting existing method {method} for class {cls} with executable {executable}"
+        )
 
     _define_method(cls, method, executable, docstring, args)
     return cls
@@ -167,12 +167,12 @@ def _process_executable(executable: str, cls):
 def _define_method(
     cls, name: str, executable: str, docstr: str, arguments: list[str] | None
 ):  # pylint: disable=too-complex
-    '''Defines a method on a given class.'''
+    """Defines a method on a given class."""
 
     def m(self, *args, **kwargs):
-        '''
+        """
         Generic Method that calls an executable with specified arguments
-        '''
+        """
 
         # special cases for __init__
         # call the superclass to initialize the _state
@@ -235,7 +235,7 @@ def _define_method(
             for topsel, subsels in d.items():
                 if not hasattr(self, topsel):
                     raise ClippyInvalidSelectorError(
-                        f'selector {topsel} not found in class; aborting'
+                        f"selector {topsel} not found in class; aborting"
                     )
                 getattr(self, topsel)._import_from_dict(subsels)
 

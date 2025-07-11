@@ -36,7 +36,7 @@ def _stream_exec(
     logger: logging.Logger,
     validate: bool,
 ) -> tuple[AnyDict | None, str | None]:
-    '''
+    """
     Internal function.
 
     Executes the command specified with `execcmd` and
@@ -48,14 +48,14 @@ def _stream_exec(
 
     This function is used by _run and _validate. All options (pre_cmd and flags) should
     already be set.
-    '''
+    """
 
     logger.debug(f'Submission = {submission_dict}')
     # PP support passing objects
     # ~ cmd_stdin = json.dumps(submission_dict)
     cmd_stdin = json.dumps(submission_dict, default=encode_clippy_json)
 
-    logger.debug('Calling %s with input %s', cmd, cmd_stdin)
+    logger.debug("Calling %s with input %s", cmd, cmd_stdin)
 
     d = {}
     stderr = None
@@ -112,7 +112,9 @@ def _stream_exec(
     return (d, stderr)
 
 
-def _validate(cmd: str | list[str], dct: AnyDict, logger: logging.Logger) -> tuple[bool, str]:
+def _validate(
+    cmd: str | list[str], dct: AnyDict, logger: logging.Logger
+) -> tuple[bool, str]:
     '''
     Converts the dictionary dct into a json file and calls executable cmd with the DRY_RUN_FLAG.
     Returns True/False (validation successful) and any stderr.
@@ -122,7 +124,7 @@ def _validate(cmd: str | list[str], dct: AnyDict, logger: logging.Logger) -> tup
         cmd = [cmd]
 
     execcmd = cfg.get('validate_cmd_prefix').split() + cmd + [DRY_RUN_FLAG]
-    logger.debug('Validating %s', cmd)
+    logger.debug("Validating %s", cmd)
 
     _, stderr = _stream_exec(execcmd, dct, logger, validate=True)
     return stderr is not None, stderr or ''

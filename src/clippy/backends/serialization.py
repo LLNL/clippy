@@ -1,13 +1,12 @@
 """
-    Clippy serialization functions and classes.
+Clippy serialization functions and classes.
 """
 
 from __future__ import annotations
-import jsonlogic
+import jsonlogic as jl
 from typing import Any
 from ..error import ClippySerializationError
 from .. import _dynamic_types
-from ..selectors import Selector
 from ..clippy_types import AnyDict
 
 
@@ -72,7 +71,7 @@ class ClippySerializable:
 
         if type_name not in _dynamic_types:
             raise ClippySerializationError(
-                f"\"{type_name}\" is not a known type, please clippy import it."
+                f'"{type_name}" is not a known type, please clippy import it.'
             )
 
         # get the type to deserialize into from the _dynamic_types dict
@@ -80,7 +79,7 @@ class ClippySerializable:
         t = _dynamic_types[type_name]
 
         if not issubclass(t, ClippySerializable):
-            raise ClippySerializationError(f"\"{type_name}\" is not serializable.")
+            raise ClippySerializationError(f'"{type_name}" is not serializable.')
 
         # create an instance of the clippy type but avoid initializing it
         # because it may have required args we don't care about.
@@ -118,13 +117,8 @@ def encode_clippy_json(o: Any) -> Any:
     """
     json encoder that is clippy-object aware.
     """
-    if isinstance(o, jsonlogic.Expression) or isinstance(
-        o, Selector
-    ):  # expression or variable
+    if isinstance(o, jl.Operand):  # expression or variable
         return {"expression_type": "jsonlogic", "rule": o.prepare()}
-
-    if isinstance(o, ClippySerializable):
-        return o.to_serial()
 
     return o
 
