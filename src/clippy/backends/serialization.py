@@ -7,7 +7,6 @@ import jsonlogic as jl
 from typing import Any
 from ..error import ClippySerializationError
 from .. import _dynamic_types
-from ..selectors import Selector
 from ..clippy_types import AnyDict
 
 
