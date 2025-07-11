@@ -5,6 +5,7 @@
 from __future__ import annotations
 import json
 import logging
+
 import subprocess
 from ...clippy_types import AnyDict
 from ... import cfg
@@ -17,7 +18,6 @@ from .constants import (
     PROGRESS_START_KEY,
     PROGRESS_END_KEY,
 )
-
 
 from ...error import ClippyValidationError, ClippyBackendError
 from ..serialization import encode_clippy_json, decode_clippy_json
@@ -56,6 +56,7 @@ def _stream_exec(
     cmd_stdin = json.dumps(submission_dict, default=encode_clippy_json)
 
     logger.debug('Calling %s with input %s', cmd, cmd_stdin)
+
     d = {}
     stderr = None
     with subprocess.Popen(
@@ -122,6 +123,7 @@ def _validate(cmd: str | list[str], dct: AnyDict, logger: logging.Logger) -> tup
 
     execcmd = cfg.get('validate_cmd_prefix').split() + cmd + [DRY_RUN_FLAG]
     logger.debug('Validating %s', cmd)
+
     _, stderr = _stream_exec(execcmd, dct, logger, validate=True)
     return stderr is not None, stderr or ''
 
@@ -137,8 +139,8 @@ def _run(cmd: str | list[str], dct: AnyDict, logger: logging.Logger) -> AnyDict:
     execcmd = cfg.get('cmd_prefix').split() + cmd
     logger.debug('Running %s', execcmd)
     # should we do something with stderr?
-    output, _ = _stream_exec(execcmd, dct, logger, validate=False)
 
+    output, _ = _stream_exec(execcmd, dct, logger, validate=False)
     return output or {}
 
 
@@ -153,6 +155,6 @@ def _help(cmd: str | list[str], dct: AnyDict, logger: logging.Logger) -> AnyDict
     execcmd = cfg.get('validate_cmd_prefix').split() + cmd + [HELP_FLAG]
     logger.debug('Running %s', execcmd)
     # should we do something with stderr?
-    output, _ = _stream_exec(execcmd, dct, logger, validate=True)
 
+    output, _ = _stream_exec(execcmd, dct, logger, validate=True)
     return output or {}

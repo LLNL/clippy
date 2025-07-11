@@ -17,10 +17,10 @@ def _check_version(output_dict: AnyDict | None) -> bool:
 
     # TODO 20240330: remove the following when we get versioning into cpp
     return True
-    if output_dict is None:
-        return False
-    if 'version' not in output_dict:
-        return False
-    backend_ver = Version.parse(output_dict['version'])
-    config_vers = cfg.get('required_versions').split(',')
-    return all(backend_ver.match(v.strip()) for v in config_vers)
+#     if output_dict is None:
+#         return False
+#     if 'version' not in output_dict:
+#         return False
+#     backend_ver = Version.parse(output_dict['version'])
+#     config_vers = cfg.get('required_versions').split(',')
+#     return all(backend_ver.match(v.strip()) for v in config_vers)
