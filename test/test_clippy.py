@@ -33,6 +33,11 @@ def testsel():
     return clippy.TestSelector()
 
 
+@pytest.fixture()
+def testgraph():
+    return clippy.TestGraph()
+
+
 def test_imports():
     assert "TestBag" in clippy.__dict__
 
@@ -183,3 +188,17 @@ def test_selectors(testsel):
 
     # with pytest.raises(ClippyInvalidSelectorError):
     #     testsel.add(testsel, 'bad', desc="this is a top-level selector")
+
+
+def test_graph(testgraph):
+    testgraph.add_edge("a", "b").add_edge("b", "c").add_edge("a", "c").add_edge(
+        "c", "d"
+    ).add_edge("d", "e").add_edge("e", "f").add_edge("f", "g").add_edge("e", "g")
+
+    assert testgraph.nv() == 7
+    assert testgraph.ne() == 8
+
+    testgraph.add_series(testgraph.node, "degree", desc="node degrees")
+    testgraph.degree(testgraph.node.degree)
+    c_e_only = testgraph.dump2(testgraph.node.degree, where=testgraph.node.degree > 2)
+    assert "c" in c_e_only and "e" in c_e_only and len(c_e_only) == 2
