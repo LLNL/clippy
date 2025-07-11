@@ -54,7 +54,7 @@ jobs:
           echo BOOST_ROOT is $BOOST_ROOT /end/
           sudo apt install doxygen
           TMPDIR=$(mktemp -d)
-          git clone https://github.com/LLNL/clippy-cpp --branch $GITHUB_HEAD_REF $TMPDIR
+          git clone https://github.com/LLNL/clippy-cpp --branch ${{ github.head_ref }} $TMPDIR || git clone https://github.com/LLNL/clippy-cpp --branch master $TMPDIR
           mkdir -p $TMPDIR/build
           cd $TMPDIR/build && cmake -DBOOST_ROOT=$BOOST_ROOT .. && make 
           ls -l $TMPDIR/build/test
