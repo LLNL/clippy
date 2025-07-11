@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import stat
 import json
 import sys
 import pathlib
@@ -33,6 +34,29 @@ from .config import _fs_config_entries
 cfg = CLIPPY_CONFIG(_fs_config_entries)
 
 PATH = sys.path[0]
+
+
+def _is_user_executable(path: pathlib.Path) -> bool:
+    # Must be a regular file
+    if not os.path.isfile(path):
+        return False
+
+    st = os.stat(path)
+    mode = st.st_mode
+    uid = os.getuid()
+    gid = os.getgid()
+
+    # Owner permissions
+    if st.st_uid == uid and mode & stat.S_IXUSR:
+        return True
+    # Group permissions
+    elif st.st_gid == gid and mode & stat.S_IXGRP:
+        return True
+    # Other permissions
+    elif mode & stat.S_IXOTH:
+        return True
+
+    return False
 
 
 def get_cfg() -> CLIPPY_CONFIG:
@@ -88,7 +112,7 @@ def _create_class(name: str, path: str, topcfg: CLIPPY_CONFIG):
     classpath = pathlib.Path(path, name)
     for file in os.scandir(classpath):
         fullpath = pathlib.Path(classpath, file)
-        if os.access(fullpath, os.X_OK) and file.is_file():
+        if _is_user_executable(fullpath):
             try:
                 _process_executable(str(fullpath), cls)
             except ClippyConfigurationError as e:
